@@ -7,7 +7,7 @@ export function Topbar({ title }: { title: string }) {
       <div className="flex items-center gap-4">
         <div className="hidden items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-[var(--color-mist-400)] sm:flex">
           <Search className="h-4 w-4" />
-          <span>Search projects…</span>
+          <span>Search signals…</span>
         </div>
         <button className="focus-ring relative rounded-xl border border-white/10 bg-white/5 p-2">
           <Bell className="h-4 w-4 text-[var(--color-mist-300)]" />

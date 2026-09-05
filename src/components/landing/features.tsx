@@ -1,22 +1,19 @@
 import { GlassCard } from "@/components/ui/glass-card";
 import {
-  Brain, MessageSquareText, Image as ImageIcon, Mic, Video, FileText,
-  Table2, Link2, Share2, Radar, Bell, GitCompare,
+  MessageSquareText, Radar as Target, AlertTriangle, Lightbulb, Users,
+  ListTodo, Building2, Plug, KeyRound,
 } from "lucide-react";
 
 const FEATURES = [
-  { icon: MessageSquareText, title: "Text sentiment & emotion", desc: "Sentiment, emotion, sarcasm, toxicity, and intent in one pass." },
-  { icon: ImageIcon, title: "Image understanding", desc: "OCR, face emotion, scene and object detection, captioning." },
-  { icon: Video, title: "Video timelines", desc: "Frame-by-frame emotion tracking synced with speech." },
-  { icon: Mic, title: "Audio & voice", desc: "Speech-to-text with tone, stress, and speaker detection." },
-  { icon: FileText, title: "Documents", desc: "PDF & DOCX summarization with entities and keywords." },
-  { icon: Table2, title: "CSV & Excel", desc: "Bulk review analysis with distribution and trend charts." },
-  { icon: Link2, title: "URL & articles", desc: "Scrape, summarize, and score any page or news article." },
-  { icon: Share2, title: "Social listening", desc: "X, Reddit, YouTube, and LinkedIn mood tracking." },
-  { icon: Radar, title: "Brand monitoring", desc: "Track reputation and complaints for any company." },
-  { icon: GitCompare, title: "Compare mode", desc: "Put two brands, products, or reviews side by side." },
-  { icon: Bell, title: "Smart alerts", desc: "Get notified the moment sentiment or toxicity spikes." },
-  { icon: Brain, title: "AI chat over your data", desc: "Ask why customers are unhappy — get a straight answer." },
+  { icon: MessageSquareText, title: "One signal stream", desc: "Reviews, tickets, chats, calls, surveys, documents, and URLs all land in a single inbox with nothing discarded." },
+  { icon: Target, title: "Intent, issue & severity", desc: "Every signal is classified deterministically: feature request, refund, complaint, or cancel — with an issue category and severity." },
+  { icon: AlertTriangle, title: "Issues that group themselves", desc: "Recurring problems are bucketed per category automatically, ranked by volume and strongest severity." },
+  { icon: Lightbulb, title: "Insights with receipts", desc: "Sentiment swings, issue surges, refund anomalies, and feature waves are each backed by the exact signals that triggered them." },
+  { icon: Users, title: "Explainable customer risk", desc: "A transparent 0–100 churn-risk score per customer, with every contributing reason recorded for your review." },
+  { icon: ListTodo, title: "Actions your team owns", desc: "High- and critical-severity insights become assignable actions with priorities, evidence, and a drafted customer response." },
+  { icon: Building2, title: "Competitor watch", desc: "Name the competitors you care about — mentions in feedback are tracked week over week with churn flags." },
+  { icon: KeyRound, title: "Scoped API access", desc: "Hash-stored API keys let you push customer feedback from your own product straight into the signal stream." },
+  { icon: Plug, title: "Integrations, ready to wire", desc: "Zendesk, Intercom, Slack, Jira, Linear, and more connect as sources and destinations." },
 ];
 
 export function Features() {
@@ -25,11 +22,11 @@ export function Features() {
       <div className="mb-14 max-w-2xl border-l-4 border-white pl-6">
         <span className="text-xs uppercase tracking-widest font-black text-white">Platform</span>
         <h2 className="mt-3 font-[family-name:var(--font-display)] text-5xl font-black uppercase tracking-tighter">
-          One engine, every signal
+          From raw feedback to assigned actions
         </h2>
         <p className="mt-4 text-sm font-medium text-neutral-400">
-          Every module below shares the same scoring pipeline, so results stay
-          consistent whether you upload a review CSV or paste a tweet.
+          Every number in the dashboard is computed from your stored signals — there is no placeholder data and no
+          fabricated metrics.
         </p>
       </div>
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

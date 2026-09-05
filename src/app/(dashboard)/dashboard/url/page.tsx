@@ -10,7 +10,7 @@ import { analyzeText, type FullTextAnalysis } from "@/lib/text-analysis";
 import { Loader2, AlertTriangle, Link2, Globe } from "lucide-react";
 
 export default function UrlAnalysisPage() {
-  const [url, setUrl] = useState("https://en.wikipedia.org/wiki/Sentiment_analysis");
+  const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pageTitle, setPageTitle] = useState("");

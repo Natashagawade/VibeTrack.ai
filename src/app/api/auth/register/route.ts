@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { resolveUserOrg } from "@/lib/org";
 import { rateLimit, clientKeyFromRequest } from "@/lib/rate-limit";
 
 const bodySchema = z.object({
@@ -41,5 +42,7 @@ export async function POST(req: NextRequest) {
     data: { name, email, password: passwordHash },
   });
 
-  return NextResponse.json({ id: user.id, email: user.email });
+  const { orgId, orgRole } = await resolveUserOrg(user.id, user.email, user.name);
+
+  return NextResponse.json({ id: user.id, email: user.email, orgId, orgRole });
 }

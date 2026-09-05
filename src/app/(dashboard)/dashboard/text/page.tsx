@@ -9,12 +9,9 @@ import { AnalysisResultPanel } from "@/components/dashboard/analysis-result-pane
 import { analyzeText, type FullTextAnalysis } from "@/lib/text-analysis";
 import { Sparkles, Wand2, Loader2, AlertTriangle } from "lucide-react";
 
-const SAMPLE =
-  `I've been using this app for about three months now and honestly the experience has been mixed. The onboarding was smooth and the interface looks great, really impressed with the design. However, customer support has been slow to respond, and I waited almost a week for a simple refund. The core features work well most of the time, but I did run into a crash last week that cost me some work. Overall I don't regret signing up, and I'd still recommend it to a friend who values good design over perfect reliability.`;
-
 export default function TextAnalysisPage() {
-  const [input, setInput] = useState(SAMPLE);
-  const [result, setResult] = useState<FullTextAnalysis>(() => analyzeText(SAMPLE));
+  const [input, setInput] = useState("");
+  const [result, setResult] = useState<FullTextAnalysis | null>(null);
   const [engine, setEngine] = useState<string>("local");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -61,8 +58,8 @@ export default function TextAnalysisPage() {
             className="focus-ring w-full resize-none rounded-xl border border-white/10 bg-black/20 p-4 text-sm leading-relaxed text-[var(--color-mist-100)]"
           />
           <div className="mt-4 flex items-center justify-between">
-            <span className="text-xs text-[var(--color-mist-400)]">{result.wordCount} words analyzed</span>
-            <Button onClick={handleAnalyze} disabled={loading}>
+            <span className="text-xs text-[var(--color-mist-400)]">{result?.wordCount ?? 0} words analyzed</span>
+            <Button onClick={handleAnalyze} disabled={loading || !input.trim()}>
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
               Analyze
             </Button>
@@ -79,21 +76,34 @@ export default function TextAnalysisPage() {
             <span className="text-xs text-[var(--color-mist-400)]">Scored by</span>
             <EngineBadge engine={engine} />
           </div>
-          <AnalysisResultPanel result={result} />
 
-          <GlassCard className="p-6">
-            <h3 className="mb-3 font-[family-name:var(--font-display)] text-base font-semibold">Highlighted sentences</h3>
-            <ul className="space-y-2">
-              {result.highlightedSentences.map((h, i) => (
-                <li key={i} className="rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-[var(--color-mist-200)]">
-                  {h.sentence}
-                </li>
-              ))}
-              {result.highlightedSentences.length === 0 && (
-                <li className="text-sm text-[var(--color-mist-400)]">No standout sentences detected.</li>
-              )}
-            </ul>
-          </GlassCard>
+          {result ? (
+            <>
+              <AnalysisResultPanel result={result} />
+
+              <GlassCard className="p-6">
+                <h3 className="mb-3 font-[family-name:var(--font-display)] text-base font-semibold">Highlighted sentences</h3>
+                <ul className="space-y-2">
+                  {result.highlightedSentences.map((h, i) => (
+                    <li key={i} className="rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-[var(--color-mist-200)]">
+                      {h.sentence}
+                    </li>
+                  ))}
+                  {result.highlightedSentences.length === 0 && (
+                    <li className="text-sm text-[var(--color-mist-400)]">No standout sentences detected.</li>
+                  )}
+                </ul>
+              </GlassCard>
+            </>
+          ) : (
+            <GlassCard className="flex flex-col items-center gap-3 p-10 text-center">
+              <Sparkles className="h-6 w-6 text-[var(--color-mist-400)]" />
+              <p className="text-sm text-[var(--color-mist-400)]">
+                Paste a review, support ticket, or survey response on the left, then hit Analyze. The result is stored
+                as a signal and feeds your intelligence.
+              </p>
+            </GlassCard>
+          )}
         </div>
       </div>
     </>

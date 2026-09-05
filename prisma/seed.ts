@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-import { PrismaClient, Role, PlanTier } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import pg from "pg";
 
@@ -16,29 +16,7 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  const user = await prisma.user.upsert({
-    where: { email: "demo@vibetrack.ai" },
-    update: {},
-    create: {
-      email: "demo@vibetrack.ai",
-      name: "Demo User",
-      role: Role.ADMIN,
-      subscription: { create: { plan: PlanTier.GROWTH } },
-    },
-  });
-
-  await prisma.project.upsert({
-    where: { id: "demo-project" },
-    update: {},
-    create: {
-      id: "demo-project",
-      name: "Demo Project",
-      tags: ["demo"],
-      userId: user.id,
-    },
-  });
-
-  console.log(`Seeded demo user: ${user.email}`);
+  console.log("No seed data configured: database starts clean.");
 }
 
 main()

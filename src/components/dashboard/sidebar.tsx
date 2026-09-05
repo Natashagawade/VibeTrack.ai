@@ -5,36 +5,42 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, MessageSquareText, Image as ImageIcon, Mic, Video, FileText,
-  Table2, Link2, Share2, Radar, BarChart3, FolderKanban, KeyRound, Bell, Settings,
-  CreditCard, User, Waves,
+  Table2, Link2, Share2, Radar, AlertTriangle, Lightbulb, Users, Building2,
+  TrendingUp, ListTodo, Plug, KeyRound, Settings, Waves,
 } from "lucide-react";
 
-const NAV = [
+const NAV_MAIN = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
-  { href: "/dashboard/text", label: "Text analysis", icon: MessageSquareText },
+  { href: "/dashboard/signals", label: "Signals", icon: MessageSquareText },
+  { href: "/dashboard/issues", label: "Issues", icon: AlertTriangle },
+  { href: "/dashboard/insights", label: "Insights", icon: Lightbulb },
+  { href: "/dashboard/customers", label: "Customers", icon: Users },
+  { href: "/dashboard/competitors", label: "Competitors", icon: Building2 },
+  { href: "/dashboard/opportunities", label: "Opportunities", icon: TrendingUp },
+  { href: "/dashboard/actions", label: "Actions", icon: ListTodo },
+];
+
+const NAV_CAPTURE = [
+  { href: "/dashboard/text", label: "Text", icon: MessageSquareText },
+  { href: "/dashboard/csv", label: "CSV & Excel", icon: Table2 },
+  { href: "/dashboard/url", label: "URL", icon: Link2 },
   { href: "/dashboard/image", label: "Image", icon: ImageIcon },
   { href: "/dashboard/audio", label: "Audio", icon: Mic },
   { href: "/dashboard/video", label: "Video", icon: Video },
   { href: "/dashboard/documents", label: "Documents", icon: FileText },
-  { href: "/dashboard/csv", label: "CSV & Excel", icon: Table2 },
-  { href: "/dashboard/url", label: "URL", icon: Link2 },
   { href: "/dashboard/social", label: "Social", icon: Share2 },
   { href: "/dashboard/brand", label: "Brand monitor", icon: Radar },
-  { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/dashboard/projects", label: "Projects", icon: FolderKanban },
 ];
 
 const NAV_BOTTOM = [
+  { href: "/dashboard/integrations", label: "Integrations", icon: Plug },
   { href: "/dashboard/api-keys", label: "API keys", icon: KeyRound },
-  { href: "/dashboard/notifications", label: "Notifications", icon: Bell },
-  { href: "/dashboard/billing", label: "Billing", icon: CreditCard },
-  { href: "/dashboard/profile", label: "Profile", icon: User },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
-function NavLink({ href, label, icon: Icon }: (typeof NAV)[number]) {
+function NavLink({ href, label, icon: Icon }: { href: string; label: string; icon: typeof LayoutDashboard }) {
   const pathname = usePathname();
-  const active = pathname === href;
+  const active = pathname === href || (href !== "/dashboard" && pathname.startsWith(`${href}/`));
   return (
     <Link
       href={href}
@@ -59,9 +65,17 @@ export function Sidebar() {
         VibeTrack <span className="text-gradient-aurora">AI</span>
       </Link>
       <nav className="flex-1 space-y-1 overflow-y-auto">
-        {NAV.map((item) => (
+        {NAV_MAIN.map((item) => (
           <NavLink key={item.href} {...item} />
         ))}
+        <div className="px-2 pt-4 text-[11px] font-medium uppercase tracking-wider text-[var(--color-mist-400)]">
+          Capture
+        </div>
+        <div className="space-y-1 pt-1">
+          {NAV_CAPTURE.map((item) => (
+            <NavLink key={item.href} {...item} />
+          ))}
+        </div>
       </nav>
       <div className="mt-4 space-y-1 border-t border-white/5 pt-4">
         {NAV_BOTTOM.map((item) => (

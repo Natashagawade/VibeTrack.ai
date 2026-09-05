@@ -1,7 +1,6 @@
-// VibeTrack AI — Prisma schema
-// This models the full product surface described in the brief. It hasn't
-// been migrated against a live database (no DATABASE_URL is configured in
-// this environment) — run `npx prisma migrate dev` once you set one.
+// VibeTrack AI — Customer Intelligence & Action Platform
+// Multi-tenant schema: every business entity is scoped to an Organization.
+// ALL reads/writes in application code MUST filter by organizationId.
 
 generator client {
   provider = "prisma-client-js"
@@ -11,7 +10,585 @@ datasource db {
   provider = "postgresql"
 }
 
-// ---------- Auth (NextAuth-compatible) ----------
+// ===================== SaaS tenancy =====================
+
+enum OrgPlan {
+  STARTER
+  GROWTH
+  ENTERPRISE
+}
+
+model Organization {
+  id             String    @id @default(cuid())
+  name           String
+  slug           String    @unique
+  plan           OrgPlan   @default(STARTER)
+  currency       String    @default("INR")
+  avgOrderValue  Decimal?  @db.Decimal(12, 2) // for revenue-at-risk estimates; Null = not configured (never fabricated)
+  competitorNames String[]                       // names to watch in competitor intelligence
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  memberships      Membership[]
+  teams            Team[]
+  customers        Customer[]
+  products         Product[]
+  sources          Source[]
+  signals          CustomerSignal[]
+  topics           Topic[]
+  issues           Issue[]
+  insights         Insight[]
+  risks            CustomerRisk[]
+  competitors      Competitor[]
+  recommendations  Recommendation[]
+  actions          Action[]
+  opportunities    ProductOpportunity[]
+  impacts          BusinessImpact[]
+  integrations     Integration[]
+  notifications    Notification[]
+  notificationPrefs NotificationPref[]
+  audits           AuditLog[]
+  reports          Report[]
+  analyses         Analysis[]
+  projects         Project[]
+  apiKeys          ApiKey[]
+  subscriptions    Subscription[]
+}
+
+enum MembershipRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+model Membership {
+  id       String         @id @default(cuid())
+  orgId    String
+  userId   String
+  teamId   String?
+  role     MembershipRole @default(MEMBER)
+  createdAt DateTime      @default(now())
+
+  org  Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team Team?        @relation(fields: [teamId], references: [id], onDelete: SetNull)
+
+  @@unique([orgId, userId])
+  @@index([userId])
+}
+
+model Team {
+  id          String   @id @default(cuid())
+  orgId       String
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  org         Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  memberships Membership[]
+
+  @@index([orgId])
+}
+
+// ===================== Core entity models =====================
+
+model Customer {
+  id          String   @id @default(cuid())
+  orgId       String
+  externalRef String?
+  name        String?
+  email       String?
+  segment     String? // e.g. "6mo+ usage", "new trial", "enterprise"
+  location    String?
+  attributes  Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  org     Organization   @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  signals CustomerSignal[]
+  risks   CustomerRisk[]
+
+  @@unique([orgId, externalRef])
+  @@index([orgId, createdAt])
+}
+
+model Product {
+  id       String  @id @default(cuid())
+  orgId    String
+  name     String
+  sku      String?
+  category String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  org     Organization   @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  signals CustomerSignal[]
+
+  @@unique([orgId, name])
+}
+
+model Source {
+  id          String   @id @default(cuid())
+  orgId       String
+  kind        String // connector id: review, support, social, call, survey, url, upload, news ...
+  name        String
+  config      Json?
+  enabled     Boolean  @default(true)
+  lastFetchAt DateTime?
+  createdAt   DateTime @default(now())
+
+  org     Organization   @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  signals CustomerSignal[]
+
+  @@unique([orgId, kind, name])
+}
+
+model Topic {
+  id          String  @id @default(cuid())
+  orgId       String
+  name        String
+  keywords    Json? // detection keywords
+  signalCount Int     @default(0)
+  createdAt   DateTime @default(now())
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, name])
+}
+
+// ===================== Signals (unified customer data) =====================
+
+enum SignalKind {
+  TEXT
+  REVIEW
+  SUPPORT_TICKET
+  CHAT
+  SURVEY
+  CALL
+  URL
+  IMAGE
+  PDF
+  DOCX
+  CSV
+  EXCEL
+  AUDIO
+  VIDEO
+  SOCIAL
+  NEWS
+}
+
+enum SignalChannel {
+  REVIEW
+  SOCIAL
+  SUPPORT
+  CALL
+  SURVEY
+  CHAT
+  EMAIL
+  WEB
+  IN_APP
+  NEWS
+  OTHER
+}
+
+enum Severity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model CustomerSignal {
+  id            String        @id @default(cuid())
+  orgId         String
+  sourceId      String?
+  customerId    String?
+  productId     String?
+  issueId       String?
+  topic         String? // topic name snapshot (fast reads without joins)
+  kind          SignalKind
+  channel       SignalChannel @default(OTHER)
+  receivedAt    DateTime      @default(now())
+  text          String        @db.Text
+  summary       String?       @db.Text
+  language      String?
+  sentiment     Json // { normalized, label, confidence, score, positiveHits, negativeHits, direction }
+  emotions      Json // [{ emotion, intensity }]
+  keywords      Json // [{ word, count }]
+  toxicity      Json // { score, label }
+  intent        String? // complaint | praise | refund | cancel | question | feature_request | ...
+  issueCategory String? // classified issue bucket: delivery, support, login, battery, ...
+  severity      Severity      @default(LOW)
+  isComplaint   Boolean       @default(false)
+  refundRequest Boolean       @default(false)
+  cancelIntent  Boolean       @default(false)
+  featureRequest Boolean      @default(false)
+  location      String?
+  mediaRefs     Json? // urls/content-types for non-text signals
+  metadata      Json?
+  createdAt     DateTime      @default(now())
+
+  org      Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  source   Source?      @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+  customer Customer?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  product  Product?     @relation(fields: [productId], references: [id], onDelete: SetNull)
+  issue    Issue?       @relation(fields: [issueId], references: [id], onDelete: SetNull)
+
+  @@index([orgId, receivedAt])
+  @@index([orgId, customerId])
+  @@index([orgId, productId])
+  @@index([orgId, issueId])
+  @@index([orgId, topic])
+  @@index([orgId, severity])
+  @@index([orgId, isComplaint])
+}
+
+// ===================== Issues & intelligence =====================
+
+enum IssueStatus {
+  OPEN
+  MONITORING
+  RESOLVED
+}
+
+model Issue {
+  id               String      @id @default(cuid())
+  orgId            String
+  name             String
+  category         String?
+  status           IssueStatus @default(OPEN)
+  firstDetectedAt  DateTime    @default(now())
+  lastSeenAt       DateTime?
+  createdAt        DateTime    @default(now())
+
+  org            Organization         @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  signals        CustomerSignal[]
+  insights       Insight[]
+  recommendations Recommendation[]
+  actions        Action[]
+  impacts        BusinessImpact[]
+  opportunities  ProductOpportunity[]
+
+  @@unique([orgId, name])
+  @@index([orgId, status])
+}
+
+enum InsightType {
+  SENTIMENT_DROP
+  SENTIMENT_RISE
+  NEW_ISSUE
+  ISSUE_SURGE
+  ANOMALY
+  EMERGING_TREND
+  COMPETITOR_RISK
+  RISK_UP
+  OPPORTUNITY
+  ACTION_RECOMMENDED
+}
+
+enum InsightStatus {
+  NEW
+  ACKNOWLEDGED
+  RESOLVED
+  DISMISSED
+}
+
+model Insight {
+  id          String        @id @default(cuid())
+  orgId       String
+  type        InsightType
+  title       String
+  body        String        @db.Text
+  severity    Severity      @default(MEDIUM)
+  confidence  Float         @default(0.6)
+  evidence    Json // { signals, sources, sampleTexts, products, locations, dates, confidence }
+  signalsCount Int          @default(0)
+  dedupeKey   String
+  status      InsightStatus @default(NEW)
+  issueId     String?
+  createdAt   DateTime      @default(now())
+  resolvedAt  DateTime?
+
+  org            Organization    @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  issue          Issue?          @relation(fields: [issueId], references: [id], onDelete: SetNull)
+  recommendations Recommendation[]
+  actions        Action[]
+
+  @@unique([orgId, dedupeKey])
+  @@index([orgId, type])
+  @@index([orgId, status])
+}
+
+model CustomerRisk {
+  id             String   @id @default(cuid())
+  orgId          String
+  customerId     String
+  score          Int // 0..100 "AI Risk Score" (heuristic; NOT a validated churn probability)
+  level          Severity @default(LOW)
+  reasons        Json // [{ reason, weight }]
+  signalsSummary Json // { negative, complaints, tickets, refunds, cancelIntent, total }
+  updatedAt      DateTime @default(now()) @updatedAt
+
+  org      Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  customer Customer     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  actions  Action[]
+
+  @@unique([orgId, customerId])
+  @@index([orgId, level])
+}
+
+model Competitor {
+  id        String   @id @default(cuid())
+  orgId     String
+  name      String
+  website   String?
+  notes     String?
+  createdAt DateTime @default(now())
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, name])
+}
+
+model BusinessImpact {
+  id                String    @id @default(cuid())
+  orgId             String
+  issueId           String
+  affectedCustomers Int
+  affectedSignals   Int
+  revenueAtRisk     Decimal?  @db.Decimal(12, 2) // Null unless avgOrderValue configured
+  revenueLabel      String // "estimated" | "not-configured"
+  severity          Severity
+  priority          String // Critical | High | Medium | Low
+  computedAt        DateTime  @default(now())
+
+  org   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  issue Issue         @relation(fields: [issueId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, issueId, computedAt])
+}
+
+model Recommendation {
+  id          String  @id @default(cuid())
+  orgId       String
+  insightId   String?
+  issueId     String?
+  title       String
+  body        String  @db.Text
+  confidence  Float   @default(0.6)
+  priority    String // Critical | High | Medium | Low
+  evidence    Json?
+  createdAt   DateTime @default(now())
+
+  org     Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  insight Insight?     @relation(fields: [insightId], references: [id], onDelete: SetNull)
+  issue   Issue?       @relation(fields: [issueId], references: [id], onDelete: SetNull)
+  actions Action[]
+
+  @@index([orgId])
+}
+
+// ===================== Actions & outcomes =====================
+
+enum ActionType {
+  INVESTIGATE
+  CREATE_PLAN
+  GENERATE_PRD
+  JIRA_TICKET
+  SLACK_ALERT
+  CUSTOMER_RESPONSE
+  ASSIGN_TEAM
+  GENERIC
+}
+
+enum ActionStatus {
+  OPEN
+  IN_PROGRESS
+  DONE
+  MEASURED
+  CANCELLED
+}
+
+enum ActionPriority {
+  P0
+  P1
+  P2
+  P3
+}
+
+model Action {
+  id             String       @id @default(cuid())
+  orgId          String
+  title          String
+  type           ActionType   @default(GENERIC)
+  priority       ActionPriority @default(P3)
+  status         ActionStatus @default(OPEN)
+  ownerId        String?
+  assigneeEmail  String?
+  dueDate        DateTime?
+  link           String? // external url (jira/slack/etc.) after integration
+  responseDraft  String?  @db.Text // generated customer response
+  outcome        Json? // { before: {...}, after: {...}, delta: {...}, measuredAt }
+  impactSummary  String?  @db.Text
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  createdById    String?
+
+  org            Organization     @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  insight        Insight?         @relation(fields: [insightId], references: [id], onDelete: SetNull)
+  issue          Issue?           @relation(fields: [issueId], references: [id], onDelete: SetNull)
+  recommendation Recommendation?  @relation(fields: [recommendationId], references: [id], onDelete: SetNull)
+  risk           CustomerRisk?    @relation(fields: [riskId], references: [id], onDelete: SetNull)
+  opportunity    ProductOpportunity? @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+  owner          User?            @relation("Owner", fields: [ownerId], references: [id], onDelete: SetNull)
+  createdBy      User?            @relation("Creator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  insightId        String?
+  issueId          String?
+  recommendationId String?
+  riskId           String?
+  opportunityId    String?
+
+  @@index([orgId, status])
+  @@index([orgId, priority])
+}
+
+enum OpportunityStatus {
+  OPEN
+  PLANNED
+  IMPLEMENTED
+  COMPLETED
+}
+
+model ProductOpportunity {
+  id        String            @id @default(cuid())
+  orgId     String
+  issueId   String?
+  title     String
+  summary   String            @db.Text
+  evidence  Json // { signals, samples, severity, customerImpact, businessImpact }
+  priority  String // Critical | High | Medium | Low
+  status    OpportunityStatus @default(OPEN)
+  prd       Json? // structured PRD
+  tasks     Json? // [{ code, title, priority, evidence }]
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  org     Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  issue   Issue?       @relation(fields: [issueId], references: [id], onDelete: SetNull)
+  actions Action[]
+
+  @@index([orgId])
+}
+
+// ===================== Integrations & notifications =====================
+
+enum IntegrationKind {
+  JIRA
+  LINEAR
+  SLACK
+  TEAMS
+  ZENDESK
+  INTERCOM
+  GOOGLE_SHEETS
+  REST_API
+}
+
+enum IntegrationStatus {
+  NOT_CONFIGURED
+  CONNECTED
+  ERROR
+  DISABLED
+}
+
+model Integration {
+  id        String            @id @default(cuid())
+  orgId     String
+  kind      IntegrationKind
+  name      String
+  status    IntegrationStatus @default(NOT_CONFIGURED)
+  config    Json? // NEVER store secrets; only non-secret config + status
+  setupUrl  String?
+  lastError String?
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, kind])
+}
+
+enum NotificationKind {
+  SENTIMENT_DROP
+  NEW_ISSUE
+  RISK_INCREASE
+  COMPETITOR_TREND
+  EMERGING_TREND
+  ACTION_DUE
+}
+
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+  SLACK
+}
+
+model NotificationPref {
+  id             String             @id @default(cuid())
+  orgId          String
+  channel        NotificationChannel @default(IN_APP)
+  sentimentDrop  Boolean            @default(true)
+  newIssue       Boolean            @default(true)
+  riskIncrease   Boolean            @default(true)
+  competitorTrend Boolean           @default(false)
+  emergingTrend  Boolean            @default(true)
+  actionDue      Boolean            @default(true)
+  userId         String? // null => org-wide preference
+
+  org  Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  orgId     String
+  userId    String?
+  kind      NotificationKind
+  severity  Severity  @default(MEDIUM)
+  title     String
+  body      String    @db.Text
+  link      String?
+  insightId String?
+  read      Boolean   @default(false)
+  createdAt DateTime  @default(now())
+
+  org     Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user    User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, read])
+  @@index([userId, read])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  orgId     String
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, createdAt])
+}
+
+// ===================== Auth (Auth.js) =====================
 
 model User {
   id            String    @id @default(cuid())
@@ -19,18 +596,22 @@ model User {
   email         String    @unique
   emailVerified DateTime?
   image         String?
-  password      String? // only set for credentials-based signup; null for OAuth-only users
+  password      String?
   role          Role      @default(USER)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
   accounts      Account[]
   sessions      Session[]
+  memberships   Membership[]
+  notifications Notification[]
+  ownedActions  Action[]    @relation("Owner")
+  createdActions Action[]   @relation("Creator")
+  notificationPrefs NotificationPref[]
   projects      Project[]
   analyses      Analysis[]
+  reports       Report[]
   apiKeys       ApiKey[]
-  notifications Notification[]
-  subscription  Subscription?
 
   @@index([email])
 }
@@ -79,10 +660,11 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// ---------- Product domain ----------
+// ===================== Legacy product domain (kept, now org-scoped) =====================
 
 model Project {
   id        String   @id @default(cuid())
+  orgId     String
   name      String
   tags      String[]
   favorite  Boolean  @default(false)
@@ -90,9 +672,11 @@ model Project {
   updatedAt DateTime @updatedAt
 
   userId   String
-  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  org      Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   analyses Analysis[]
 
+  @@index([orgId])
   @@index([userId])
 }
 
@@ -126,69 +710,65 @@ enum AnalysisEngine {
 
 model Analysis {
   id         String         @id @default(cuid())
+  orgId      String
   type       AnalysisType
   engine     AnalysisEngine @default(LOCAL)
-  source     String? // filename, URL, or short label
+  source     String?
   inputText  String?        @db.Text
   sentiment  SentimentLabel
-  score      Float // normalized -1..1
+  score      Float
   confidence Float
-  emotions   Json // [{ emotion, intensity }]
-  keywords   Json // [{ word, count }]
-  toxicity   Json // { score, label }
+  emotions   Json
+  keywords   Json
+  toxicity   Json
   language   String?
   summary    String?        @db.Text
-  raw        Json? // full engine payload for audit/debugging
+  raw        Json?
   createdAt  DateTime       @default(now())
 
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   projectId String?
   project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  productId String?
 
-  @@index([userId, createdAt])
+  @@index([orgId, createdAt])
   @@index([projectId])
   @@index([type])
 }
 
 model Report {
   id        String   @id @default(cuid())
+  orgId     String
   title     String
-  format    String // pdf | csv | excel | json
+  format    String
   fileUrl   String?
   createdAt DateTime @default(now())
 
   userId String
+  org    Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([userId])
-}
-
-model Notification {
-  id        String   @id @default(cuid())
-  type      String // sentiment_spike | toxicity_spike | reputation_drop
-  message   String
-  read      Boolean  @default(false)
-  createdAt DateTime @default(now())
-
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId, read])
+  @@index([orgId])
 }
 
 model ApiKey {
   id         String    @id @default(cuid())
+  orgId      String
   name       String
-  keyHash    String    @unique // store a hash, never the raw key
-  keyPrefix  String // first few chars shown in UI, e.g. "vt_live_ab12"
+  keyHash    String    @unique
+  keyPrefix  String
   lastUsedAt DateTime?
-  rateLimit  Int       @default(1000) // requests / day
+  rateLimit  Int       @default(1000)
   createdAt  DateTime  @default(now())
   revokedAt  DateTime?
 
   userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  org    Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([orgId])
   @@index([userId])
 }
 
@@ -200,6 +780,7 @@ enum PlanTier {
 
 model Subscription {
   id                   String   @id @default(cuid())
+  orgId                String   @unique
   plan                 PlanTier @default(STARTER)
   stripeCustomerId     String?  @unique
   stripeSubscriptionId String?  @unique
@@ -207,6 +788,5 @@ model Subscription {
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
 
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
 }
