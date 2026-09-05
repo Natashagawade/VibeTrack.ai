@@ -1,0 +1,46 @@
+services:
+  app:
+    build:
+      context: .
+      args:
+        DATABASE_URL: postgresql://vibetrack:vibetrack@db:5432/vibetrack
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.local
+    environment:
+      DATABASE_URL: postgresql://vibetrack:vibetrack@db:5432/vibetrack
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: vibetrack
+      POSTGRES_PASSWORD: vibetrack
+      POSTGRES_DB: vibetrack
+    ports:
+      - "5432:5432"
+    volumes:
+      - vibetrack_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vibetrack"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - vibetrack_redisdata:/data
+
+volumes:
+  vibetrack_pgdata:
+  vibetrack_redisdata:

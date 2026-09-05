@@ -1,0 +1,212 @@
+// VibeTrack AI — Prisma schema
+// This models the full product surface described in the brief. It hasn't
+// been migrated against a live database (no DATABASE_URL is configured in
+// this environment) — run `npx prisma migrate dev` once you set one.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------- Auth (NextAuth-compatible) ----------
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String? // only set for credentials-based signup; null for OAuth-only users
+  role          Role      @default(USER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  projects      Project[]
+  analyses      Analysis[]
+  apiKeys       ApiKey[]
+  notifications Notification[]
+  subscription  Subscription?
+
+  @@index([email])
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ---------- Product domain ----------
+
+model Project {
+  id        String   @id @default(cuid())
+  name      String
+  tags      String[]
+  favorite  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId   String
+  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  analyses Analysis[]
+
+  @@index([userId])
+}
+
+enum AnalysisType {
+  TEXT
+  IMAGE
+  AUDIO
+  VIDEO
+  PDF
+  DOCX
+  CSV
+  EXCEL
+  URL
+  SOCIAL
+  BRAND
+}
+
+enum SentimentLabel {
+  POSITIVE
+  NEGATIVE
+  NEUTRAL
+  MIXED
+}
+
+enum AnalysisEngine {
+  LOCAL
+  OPENAI
+  GEMINI
+  HUGGINGFACE
+}
+
+model Analysis {
+  id         String         @id @default(cuid())
+  type       AnalysisType
+  engine     AnalysisEngine @default(LOCAL)
+  source     String? // filename, URL, or short label
+  inputText  String?        @db.Text
+  sentiment  SentimentLabel
+  score      Float // normalized -1..1
+  confidence Float
+  emotions   Json // [{ emotion, intensity }]
+  keywords   Json // [{ word, count }]
+  toxicity   Json // { score, label }
+  language   String?
+  summary    String?        @db.Text
+  raw        Json? // full engine payload for audit/debugging
+  createdAt  DateTime       @default(now())
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([projectId])
+  @@index([type])
+}
+
+model Report {
+  id        String   @id @default(cuid())
+  title     String
+  format    String // pdf | csv | excel | json
+  fileUrl   String?
+  createdAt DateTime @default(now())
+
+  userId String
+
+  @@index([userId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  type      String // sentiment_spike | toxicity_spike | reputation_drop
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+}
+
+model ApiKey {
+  id         String    @id @default(cuid())
+  name       String
+  keyHash    String    @unique // store a hash, never the raw key
+  keyPrefix  String // first few chars shown in UI, e.g. "vt_live_ab12"
+  lastUsedAt DateTime?
+  rateLimit  Int       @default(1000) // requests / day
+  createdAt  DateTime  @default(now())
+  revokedAt  DateTime?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+enum PlanTier {
+  STARTER
+  GROWTH
+  ENTERPRISE
+}
+
+model Subscription {
+  id                   String   @id @default(cuid())
+  plan                 PlanTier @default(STARTER)
+  stripeCustomerId     String?  @unique
+  stripeSubscriptionId String?  @unique
+  currentPeriodEnd     DateTime?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
