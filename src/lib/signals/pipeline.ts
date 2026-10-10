@@ -16,7 +16,9 @@ export interface IngestSignalInput {
   sourceKind?: string;
   customerName?: string;
   customerEmail?: string;
+  customerExternalRef?: string;
   productName?: string;
+  location?: string;
   mediaRefs?: Prisma.InputJsonValue;
   metadata?: Prisma.InputJsonValue;
   receivedAt?: Date;
@@ -48,15 +50,33 @@ async function findOrCreateSource(opts: { orgId: string; kind: string; name: str
   });
 }
 
-async function findOrCreateCustomer(opts: { orgId: string; name?: string; email?: string }): Promise<{ id: string } | null> {
-  const key = opts.email ?? opts.name;
+async function findOrCreateCustomer(opts: {
+  orgId: string;
+  name?: string;
+  email?: string;
+  externalRef?: string;
+}): Promise<{ id: string } | null> {
+  const key = opts.externalRef ?? opts.email ?? opts.name;
   if (!key) return null;
-  return prisma.customer
-    .findFirst({ where: { orgId: opts.orgId, OR: [{ email: opts.email ?? undefined }, { name: opts.name ?? undefined }] }, select: { id: true } })
-    .then(async (existing) => {
-      if (existing) return existing;
-      return prisma.customer.create({ data: { orgId: opts.orgId, name: opts.name, email: opts.email }, select: { id: true } });
+
+  let existing: { id: string } | null = null;
+  if (opts.externalRef) {
+    existing = await prisma.customer.findUnique({
+      where: { orgId_externalRef: { orgId: opts.orgId, externalRef: opts.externalRef } },
+      select: { id: true },
     });
+  }
+  if (!existing) {
+    existing = await prisma.customer.findFirst({
+      where: { orgId: opts.orgId, OR: [{ email: opts.email ?? undefined }, { name: opts.name ?? undefined }] },
+      select: { id: true },
+    });
+  }
+  if (existing) return existing;
+  return prisma.customer.create({
+    data: { orgId: opts.orgId, name: opts.name, email: opts.email, externalRef: opts.externalRef },
+    select: { id: true },
+  });
 }
 
 async function findOrCreateProduct(opts: { orgId: string; name: string }): Promise<{ id: string } | null> {
@@ -73,6 +93,10 @@ async function findOrCreateProduct(opts: { orgId: string; name: string }): Promi
  * Full signal ingestion: normalise → de-duplicate → enrich → classify →
  * resolve dimensions → persist as a CustomerSignal.
  *
+ * Deduplication is atomic: upsert on the org-scoped unique `dedupeHash` column
+ * prevents race-condition duplicates between concurrent requests with the same
+ * normalised text.
+ *
  * Deterministic local engine powers enrichment; the AI provider is used only
  * when a key is configured and healthy, falling back to the engine.
  */
@@ -82,8 +106,15 @@ export async function ingestSignal(input: IngestSignalInput): Promise<IngestedSi
 
   const hash = signalHash(text);
 
+  // Fast path: dedupe via column (new records) or metadata JSON path (legacy).
   const existing = await prisma.customerSignal.findFirst({
-    where: { orgId: input.orgId, metadata: { path: ["dedupeHash"], equals: hash } },
+    where: {
+      orgId: input.orgId,
+      OR: [
+        { dedupeHash: hash },
+        { metadata: { path: ["dedupeHash"], equals: hash } },
+      ],
+    },
     select: { id: true },
   });
   if (existing) {
@@ -113,13 +144,20 @@ export async function ingestSignal(input: IngestSignalInput): Promise<IngestedSi
     orgId: input.orgId,
     name: input.customerName,
     email: input.customerEmail,
+    externalRef: input.customerExternalRef,
   });
   const product = input.productName
     ? await findOrCreateProduct({ orgId: input.orgId, name: input.productName })
     : undefined;
 
-  const signal = await prisma.customerSignal.create({
-    data: {
+  // Atomic dedupe: upsert on the unique (orgId, dedupeHash) index.
+  // Two concurrent requests with the same text: one creates, the other
+  // hits the unique constraint and returns the existing row.
+  const signal = await prisma.customerSignal.upsert({
+    where: {
+      orgId_dedupeHash: { orgId: input.orgId, dedupeHash: hash },
+    },
+    create: {
       orgId: input.orgId,
       sourceId: source?.id,
       customerId: customer?.id,
@@ -142,12 +180,15 @@ export async function ingestSignal(input: IngestSignalInput): Promise<IngestedSi
       cancelIntent: classification.cancelIntent,
       featureRequest: classification.featureRequest,
       topic: classification.issueCategory,
+      location: input.location ?? undefined,
       mediaRefs: input.mediaRefs ?? undefined,
       metadata: {
         ...(input.metadata && typeof input.metadata === "object" ? (input.metadata as Record<string, unknown>) : {}),
         dedupeHash: hash,
       } as Prisma.InputJsonValue,
+      dedupeHash: hash,
     },
+    update: {},
   });
 
   return { id: signal.id, signal: { id: signal.id, orgId: signal.orgId }, classification, severity: classification.severity, dedupeHash: hash };

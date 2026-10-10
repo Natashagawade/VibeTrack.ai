@@ -46,19 +46,20 @@ export default function TextAnalysisPage() {
     <>
       <Topbar title="Text analysis" />
       <div className="grid gap-6 p-6 lg:grid-cols-5">
-        <GlassCard className="p-6 lg:col-span-2">
-          <div className="mb-3 flex items-center gap-2 text-sm text-[var(--color-mist-400)]">
-            <Sparkles className="h-4 w-4 text-[var(--color-aurora-cyan)]" />
+        <GlassCard variant="interactive" className="p-6 lg:col-span-2 animate-fade-in-up">
+          <div className="mb-3 flex items-center gap-2 text-sm text-[var(--color-text-secondary)]">
+            <Sparkles className="h-4 w-4 text-[var(--color-accent-cyan)]" />
             Paste text, a review, or a comment
           </div>
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             rows={14}
-            className="focus-ring w-full resize-none rounded-xl border border-white/10 bg-black/20 p-4 text-sm leading-relaxed text-[var(--color-mist-100)]"
+            className="focus-ring w-full resize-none rounded-xl glass-input px-4 py-4 text-sm leading-relaxed text-[var(--color-text-primary)]"
+            placeholder="Paste customer feedback, a review, support ticket, or any text to analyze…"
           />
           <div className="mt-4 flex items-center justify-between">
-            <span className="text-xs text-[var(--color-mist-400)]">{result?.wordCount ?? 0} words analyzed</span>
+            <span className="text-xs text-[var(--color-text-muted)]">{result?.wordCount ?? 0} words analyzed</span>
             <Button onClick={handleAnalyze} disabled={loading || !input.trim()}>
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
               Analyze
@@ -72,8 +73,8 @@ export default function TextAnalysisPage() {
         </GlassCard>
 
         <div className="space-y-6 lg:col-span-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-[var(--color-mist-400)]">Scored by</span>
+          <div className="flex items-center justify-between animate-fade-in-up">
+            <span className="text-xs text-[var(--color-text-muted)]">Scored by</span>
             <EngineBadge engine={engine} />
           </div>
 
@@ -81,26 +82,25 @@ export default function TextAnalysisPage() {
             <>
               <AnalysisResultPanel result={result} />
 
-              <GlassCard className="p-6">
+              <GlassCard variant="interactive" className="p-6 animate-fade-in-up">
                 <h3 className="mb-3 font-[family-name:var(--font-display)] text-base font-semibold">Highlighted sentences</h3>
                 <ul className="space-y-2">
                   {result.highlightedSentences.map((h, i) => (
-                    <li key={i} className="rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-[var(--color-mist-200)]">
+                    <li key={i} className="glass-panel-subtle rounded-xl p-3 text-sm text-[var(--color-text-primary)]">
                       {h.sentence}
                     </li>
                   ))}
                   {result.highlightedSentences.length === 0 && (
-                    <li className="text-sm text-[var(--color-mist-400)]">No standout sentences detected.</li>
+                    <li className="text-sm text-[var(--color-text-muted)]">No standout sentences detected.</li>
                   )}
                 </ul>
               </GlassCard>
             </>
           ) : (
-            <GlassCard className="flex flex-col items-center gap-3 p-10 text-center">
-              <Sparkles className="h-6 w-6 text-[var(--color-mist-400)]" />
-              <p className="text-sm text-[var(--color-mist-400)]">
-                Paste a review, support ticket, or survey response on the left, then hit Analyze. The result is stored
-                as a signal and feeds your intelligence.
+            <GlassCard variant="interactive" className="flex flex-col items-center gap-3 p-10 text-center animate-fade-in-up">
+              <Sparkles className="h-8 w-8 text-[var(--color-text-muted)]" />
+              <p className="text-sm text-[var(--color-text-muted)] max-w-md">
+                Paste a review, support ticket, or survey response on the left, then hit Analyze. The result is stored as a signal and feeds your intelligence.
               </p>
             </GlassCard>
           )}

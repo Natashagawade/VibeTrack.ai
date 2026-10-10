@@ -4,9 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
-  LayoutDashboard, MessageSquareText, Image as ImageIcon, Mic, Video, FileText,
+  LayoutDashboard, MessageSquareText, Image as ImageIcon, Mic, FileText,
   Table2, Link2, Share2, Radar, AlertTriangle, Lightbulb, Users, Building2,
-  TrendingUp, ListTodo, Plug, KeyRound, Settings, Waves,
+  TrendingUp, ListTodo, Plug, KeyRound, Settings, Waves, Database, Brain,
 } from "lucide-react";
 
 const NAV_MAIN = [
@@ -18,15 +18,16 @@ const NAV_MAIN = [
   { href: "/dashboard/competitors", label: "Competitors", icon: Building2 },
   { href: "/dashboard/opportunities", label: "Opportunities", icon: TrendingUp },
   { href: "/dashboard/actions", label: "Actions", icon: ListTodo },
+  { href: "/dashboard/memory", label: "Business Memory", icon: Brain },
 ];
 
 const NAV_CAPTURE = [
-  { href: "/dashboard/text", label: "Text", icon: MessageSquareText },
-  { href: "/dashboard/csv", label: "CSV & Excel", icon: Table2 },
-  { href: "/dashboard/url", label: "URL", icon: Link2 },
-  { href: "/dashboard/image", label: "Image", icon: ImageIcon },
-  { href: "/dashboard/audio", label: "Audio", icon: Mic },
-  { href: "/dashboard/video", label: "Video", icon: Video },
+  { href: "/dashboard/import", label: "Import data", icon: Table2 },
+  { href: "/dashboard/sources", label: "Data sources", icon: Database },
+  { href: "/dashboard/text", label: "Text analysis", icon: MessageSquareText },
+  { href: "/dashboard/url", label: "URL analysis", icon: Link2 },
+  { href: "/dashboard/image", label: "Image analysis", icon: ImageIcon },
+  { href: "/dashboard/audio", label: "Audio analysis", icon: Mic },
   { href: "/dashboard/documents", label: "Documents", icon: FileText },
   { href: "/dashboard/social", label: "Social", icon: Share2 },
   { href: "/dashboard/brand", label: "Brand monitor", icon: Radar },
@@ -45,13 +46,13 @@ function NavLink({ href, label, icon: Icon }: { href: string; label: string; ico
     <Link
       href={href}
       className={cn(
-        "focus-ring flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors",
+        "focus-ring flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
         active
-          ? "bg-white/10 text-[var(--color-mist-100)]"
-          : "text-[var(--color-mist-400)] hover:bg-white/5 hover:text-[var(--color-mist-100)]"
+          ? "glass-panel-strong text-[var(--color-text-primary)] shadow-[0_0_0_1px_rgba(0,229,208,0.3)]"
+          : "text-[var(--color-text-secondary)] hover:glass-panel hover:text-[var(--color-text-primary)]"
       )}
     >
-      <Icon className="h-4 w-4" />
+      <Icon className="h-4 w-4 shrink-0" />
       {label}
     </Link>
   );
@@ -59,18 +60,19 @@ function NavLink({ href, label, icon: Icon }: { href: string; label: string; ico
 
 export function Sidebar() {
   return (
-    <aside className="hidden h-screen w-64 shrink-0 flex-col border-r border-white/5 bg-[var(--color-void-950)]/60 p-4 lg:flex">
-      <Link href="/" className="mb-6 flex items-center gap-2 px-2 font-[family-name:var(--font-display)] text-base font-semibold">
-        <Waves className="h-5 w-5 text-[var(--color-aurora-cyan)]" />
-        VibeTrack <span className="text-gradient-aurora">AI</span>
+    <aside className="hidden h-screen w-64 shrink-0 flex-col border-r border-white/5 bg-[var(--color-bg-elevated)]/80 backdrop-blur-xl p-4 lg:flex">
+      <Link href="/" className="mb-8 flex items-center gap-2 px-2 font-[family-name:var(--font-display)] text-base font-semibold">
+        <div className="h-6 w-6 rounded-lg bg-gradient-to-br from-[var(--color-accent-cyan)] to-[var(--color-accent-violet)] flex items-center justify-center">
+          <Waves className="h-4 w-4 text-[var(--color-bg-base)]" />
+        </div>
+        <span className="text-gradient-accent">VibeTrack</span>
       </Link>
       <nav className="flex-1 space-y-1 overflow-y-auto">
+        <SectionLabel className="px-2 py-2">Intelligence</SectionLabel>
         {NAV_MAIN.map((item) => (
           <NavLink key={item.href} {...item} />
         ))}
-        <div className="px-2 pt-4 text-[11px] font-medium uppercase tracking-wider text-[var(--color-mist-400)]">
-          Capture
-        </div>
+        <SectionLabel className="px-2 pt-6 pb-2">Capture</SectionLabel>
         <div className="space-y-1 pt-1">
           {NAV_CAPTURE.map((item) => (
             <NavLink key={item.href} {...item} />
@@ -83,5 +85,13 @@ export function Sidebar() {
         ))}
       </div>
     </aside>
+  );
+}
+
+function SectionLabel({ children, className, ...props }: React.LabelHTMLAttributes<HTMLDivElement>) {
+  return (
+    <div {...props} className={cn("px-2 text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wide", className)}>
+      {children}
+    </div>
   );
 }

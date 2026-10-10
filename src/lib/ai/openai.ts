@@ -116,6 +116,30 @@ export interface VisionAnalysis {
   faceEmotions: { emotion: string; intensity: number }[];
 }
 
+export type AIVisionErrorCode =
+  | "quota_exhausted"
+  | "auth"
+  | "rate_limit"
+  | "bad_response"
+  | "unknown";
+
+/**
+ * Typed vision failure so the API route and UI can distinguish an exhausted
+ * account (a real, actionable condition) from a transient/model failure and
+ * degrade gracefully instead of surfacing a raw provider error.
+ */
+export class AIVisionError extends Error {
+  code: AIVisionErrorCode;
+  providerStatus: number;
+
+  constructor(code: AIVisionErrorCode, providerStatus: number, message: string) {
+    super(message);
+    this.name = "AIVisionError";
+    this.code = code;
+    this.providerStatus = providerStatus;
+  }
+}
+
 /** Describes an image (caption, scene, objects, mood, best-effort face emotion) via GPT-4o-mini vision. */
 export async function aiAnalyzeImage(base64DataUrl: string): Promise<VisionAnalysis> {
   const key = requireKey();
@@ -154,11 +178,36 @@ export async function aiAnalyzeImage(base64DataUrl: string): Promise<VisionAnaly
 
   if (!res.ok) {
     const body = await res.text();
-    throw new Error(`OpenAI vision analysis failed (${res.status}): ${body.slice(0, 300)}`);
+    throw classifyVisionError(res.status, body);
   }
 
   const data = await res.json();
   const raw = data.choices?.[0]?.message?.content;
-  if (!raw) throw new Error("OpenAI returned an empty response.");
-  return JSON.parse(raw) as VisionAnalysis;
+  if (!raw) throw new AIVisionError("bad_response", 502, "AI vision returned an empty response.");
+  try {
+    return JSON.parse(raw) as VisionAnalysis;
+  } catch {
+    throw new AIVisionError("bad_response", 502, "AI vision returned an unreadable response.");
+  }
+}
+
+function classifyVisionError(status: number, body: string): AIVisionError {
+  if (status === 401 || status === 403) {
+    return new AIVisionError(
+      "auth",
+      status,
+      "AI vision is unavailable: the OpenAI API key was rejected. Check OPENAI_API_KEY."
+    );
+  }
+  if (status === 429 && /insufficient_quota|credit_balance_exhausted|current quota/i.test(body)) {
+    return new AIVisionError(
+      "quota_exhausted",
+      status,
+      "AI vision is unavailable: the OpenAI account has no remaining credits. Add credits in your OpenAI billing settings, then try again. Local analysis is shown instead."
+    );
+  }
+  if (status === 429) {
+    return new AIVisionError("rate_limit", status, "AI vision is rate-limited right now. Try again in a moment.");
+  }
+  return new AIVisionError("unknown", status, `AI vision request failed (${status}).`);
 }

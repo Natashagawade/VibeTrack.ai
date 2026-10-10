@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { AnalysisResultPanel } from "@/components/dashboard/analysis-result-panel";
 import { EngineBadge } from "@/components/dashboard/engine-badge";
 import { analyzeText, type FullTextAnalysis } from "@/lib/text-analysis";
-import { Loader2, AlertTriangle, Link2, Globe } from "lucide-react";
+import { Loader2, AlertTriangle, Link2, Globe, ArrowRight } from "lucide-react";
 
 export default function UrlAnalysisPage() {
   const [url, setUrl] = useState("");
@@ -63,25 +63,22 @@ export default function UrlAnalysisPage() {
     <>
       <Topbar title="URL analysis" />
       <div className="space-y-6 p-6">
-        <GlassCard className="p-6">
-          <p className="mb-4 text-sm text-[var(--color-mist-400)]">
-            Paste any article, blog post, or product page URL. A server route
-            fetches the page, strips it down to readable text, and scores it —
-            real page content, not a mock.
+        <GlassCard variant="interactive" className="p-6 animate-fade-in-up">
+          <p className="mb-4 text-sm text-[var(--color-text-secondary)]">
+            Paste any article, blog post, or product page URL. A server route fetches the page, strips it down to readable text, and scores it — real page content, not a mock.
           </p>
           <div className="flex flex-col gap-3 sm:flex-row">
-            <div className="focus-ring flex flex-1 items-center gap-2 rounded-xl border border-white/10 bg-black/20 px-4 py-2.5">
-              <Link2 className="h-4 w-4 shrink-0 text-[var(--color-mist-400)]" />
+            <div className="focus-ring flex flex-1 items-center gap-2 glass-input px-4 py-3 rounded-xl">
+              <Link2 className="h-4 w-4 shrink-0 text-[var(--color-text-muted)]" />
               <input
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder="https://example.com/article"
-                className="w-full bg-transparent text-sm text-[var(--color-mist-100)] outline-none placeholder:text-[var(--color-mist-400)]/50"
+                className="w-full bg-transparent text-sm text-[var(--color-text-primary)] outline-none placeholder:text-[var(--color-text-muted)]"
               />
             </div>
-            <Button onClick={handleAnalyze} disabled={loading || !url.trim()}>
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Globe className="h-4 w-4" />}
-              Analyze
+            <Button onClick={handleAnalyze} disabled={loading || !url.trim()} size="md">
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <> <Globe className="h-4 w-4" /> Analyze </>}
             </Button>
           </div>
           {error && (
@@ -93,12 +90,12 @@ export default function UrlAnalysisPage() {
 
         {result && (
           <>
-            <div className="flex justify-end">
+            <div className="flex justify-end animate-fade-in-up delay-1">
               <EngineBadge engine={engine} />
             </div>
-            <GlassCard className="p-6">
-              <div className="text-xs uppercase tracking-widest text-[var(--color-mist-400)]">{pageTitle || "Extracted content"}</div>
-              <p className="mt-2 max-h-40 overflow-y-auto whitespace-pre-wrap text-sm text-[var(--color-mist-300)]">
+            <GlassCard variant="interactive" className="p-6 animate-fade-in-up delay-2">
+              <div className="text-xs uppercase tracking-widest text-[var(--color-text-muted)]">{pageTitle || "Extracted content"}</div>
+              <p className="mt-2 max-h-40 overflow-y-auto whitespace-pre-wrap text-sm text-[var(--color-text-primary)] bg-[var(--color-bg-base)]/30 rounded-xl p-4 font-mono text-xs leading-relaxed">
                 {extracted.slice(0, 1500)}
                 {extracted.length > 1500 ? "…" : ""}
               </p>

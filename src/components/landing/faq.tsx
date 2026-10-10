@@ -28,21 +28,21 @@ export function FAQ() {
   const [open, setOpen] = useState<number | null>(0);
   return (
     <section id="faq" className="mx-auto max-w-3xl px-6 py-24">
-      <h2 className="mb-10 text-center font-[family-name:var(--font-display)] text-5xl font-black uppercase tracking-tighter">
+      <h2 className="mb-10 text-center font-[family-name:var(--font-display)] text-5xl font-black uppercase tracking-tighter text-gradient-accent">
         Questions, answered
       </h2>
       <div className="space-y-4">
         {QA.map((item, i) => (
-          <GlassCard key={item.q} className="overflow-hidden border-2 border-white bg-black">
+          <GlassCard key={item.q} variant="interactive" className="overflow-hidden">
             <button
-              className="focus-ring flex w-full items-center justify-between px-6 py-5 text-left hover:bg-white hover:text-black transition-colors"
+              className="focus-ring flex w-full items-center justify-between px-6 py-5 text-left"
               onClick={() => setOpen(open === i ? null : i)}
             >
-              <span className="font-black uppercase tracking-tight text-sm sm:text-base">{item.q}</span>
-              <ChevronDown className={cn("h-5 w-5 shrink-0 transition-transform", open === i && "rotate-180")} />
+              <span className="font-bold uppercase tracking-tight text-sm sm:text-base text-[var(--color-text-primary)]">{item.q}</span>
+              <ChevronDown className={cn("h-5 w-5 shrink-0 text-[var(--color-text-secondary)] transition-transform duration-200", open === i && "rotate-180")} />
             </button>
             {open === i && (
-              <p className="px-6 pt-2 pb-6 text-sm font-medium border-t-2 border-white bg-black text-neutral-400">{item.a}</p>
+              <p className="px-6 pt-2 pb-6 text-sm font-medium border-t border-white/10 text-[var(--color-text-secondary)] animate-fade-in-up">{item.a}</p>
             )}
           </GlassCard>
         ))}

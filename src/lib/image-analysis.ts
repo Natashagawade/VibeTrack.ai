@@ -1,5 +1,7 @@
 "use client";
 
+import type { ImagePixelStats } from "@/lib/image-insight";
+
 // Both functions run entirely in the browser (WASM OCR + canvas pixel reads).
 
 export async function runOcr(file: File, onProgress?: (p: number) => void): Promise<string> {
@@ -16,11 +18,7 @@ export async function runOcr(file: File, onProgress?: (p: number) => void): Prom
   return text.trim();
 }
 
-export interface ImageColorAnalysis {
-  avgBrightness: number; // 0-255
-  dominantColor: string; // hex
-  palette: { color: string; percent: number }[];
-}
+export type ImageColorAnalysis = ImagePixelStats;
 
 export async function analyzeImageColors(file: File): Promise<ImageColorAnalysis> {
   const bitmap = await createImageBitmap(file);
@@ -33,14 +31,19 @@ export async function analyzeImageColors(file: File): Promise<ImageColorAnalysis
   ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
   const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-  let rSum = 0, gSum = 0, bSum = 0, brightnessSum = 0;
+  let rSum = 0, gSum = 0, bSum = 0, brightnessSum = 0, brightnessSqSum = 0, satSum = 0;
   const buckets = new Map<string, number>();
   const pixelCount = data.length / 4;
 
   for (let i = 0; i < data.length; i += 4) {
     const r = data[i], g = data[i + 1], b = data[i + 2];
     rSum += r; gSum += g; bSum += b;
-    brightnessSum += (r * 0.299 + g * 0.587 + b * 0.114);
+    const lum = r * 0.299 + g * 0.587 + b * 0.114;
+    brightnessSum += lum;
+    brightnessSqSum += lum * lum;
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    satSum += max === 0 ? 0 : (max - min) / max;
     // Bucket into coarse 32-step color bins for a rough palette
     const key = `${Math.round(r / 32) * 32},${Math.round(g / 32) * 32},${Math.round(b / 32) * 32}`;
     buckets.set(key, (buckets.get(key) ?? 0) + 1);
@@ -57,5 +60,17 @@ export async function analyzeImageColors(file: File): Promise<ImageColorAnalysis
       return { color: `#${toHex(r)}${toHex(g)}${toHex(b)}`, percent: Math.round((count / pixelCount) * 100) };
     });
 
-  return { avgBrightness: Math.round(brightnessSum / pixelCount), dominantColor, palette };
+  const avg = brightnessSum / pixelCount;
+  const variance = Math.max(0, brightnessSqSum / pixelCount - avg * avg);
+
+  return {
+    width: bitmap.width,
+    height: bitmap.height,
+    avgBrightness: Math.round(avg),
+    contrast: Math.round(Math.sqrt(variance) * 10) / 10,
+    colorfulness: Math.round((satSum / pixelCount) * 1000) / 1000,
+    warmth: Math.round(((rSum - bSum) / pixelCount / 255) * 100) / 100,
+    dominantColor,
+    palette,
+  };
 }

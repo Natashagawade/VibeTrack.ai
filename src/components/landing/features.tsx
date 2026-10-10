@@ -19,24 +19,26 @@ const FEATURES = [
 export function Features() {
   return (
     <section id="features" className="mx-auto max-w-7xl px-6 py-24">
-      <div className="mb-14 max-w-2xl border-l-4 border-white pl-6">
-        <span className="text-xs uppercase tracking-widest font-black text-white">Platform</span>
-        <h2 className="mt-3 font-[family-name:var(--font-display)] text-5xl font-black uppercase tracking-tighter">
+      <div className="mb-14 max-w-2xl">
+        <span className="text-xs uppercase tracking-widest font-bold text-[var(--color-accent-cyan)]">Platform</span>
+        <h2 className="mt-3 font-[family-name:var(--font-display)] text-5xl font-black uppercase tracking-tighter text-gradient-accent">
           From raw feedback to assigned actions
         </h2>
-        <p className="mt-4 text-sm font-medium text-neutral-400">
+        <p className="mt-4 text-sm font-medium text-[var(--color-text-secondary)]">
           Every number in the dashboard is computed from your stored signals — there is no placeholder data and no
           fabricated metrics.
         </p>
       </div>
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {FEATURES.map((f) => (
-          <GlassCard key={f.title} className="group p-6 border-2 border-white hover:bg-white hover:text-black transition-all">
-            <f.icon className="h-6 w-6 text-white group-hover:text-black" />
-            <h3 className="mt-4 font-[family-name:var(--font-display)] text-lg font-black uppercase tracking-tight">
+        {FEATURES.map((f, index) => (
+          <GlassCard key={f.title} variant="interactive" className="p-6 animate-fade-in-up" style={{ animationDelay: `${index * 0.05}s` }}>
+            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[var(--color-accent-cyan)]/20 to-[var(--color-accent-violet)]/20 border border-[var(--color-accent-cyan)]/30 flex items-center justify-center">
+              <f.icon className="h-5 w-5 text-[var(--color-accent-cyan)]" />
+            </div>
+            <h3 className="mt-4 font-[family-name:var(--font-display)] text-lg font-bold uppercase tracking-tight">
               {f.title}
             </h3>
-            <p className="mt-2 text-sm font-medium text-neutral-400 group-hover:text-neutral-800">{f.desc}</p>
+            <p className="mt-2 text-sm font-medium text-[var(--color-text-secondary)]">{f.desc}</p>
           </GlassCard>
         ))}
       </div>

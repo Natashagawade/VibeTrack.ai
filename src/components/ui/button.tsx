@@ -2,26 +2,32 @@ import { cn } from "@/lib/utils";
 import { ButtonHTMLAttributes, forwardRef } from "react";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "ghost" | "outline";
+  variant?: "primary" | "ghost" | "outline" | "glass";
   size?: "sm" | "md" | "lg";
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = "primary", size = "md", ...props }, ref) => {
+  ({ className, variant = "primary", size = "md", disabled, ...props }, ref) => {
     return (
       <button
         ref={ref}
+        disabled={disabled}
         className={cn(
-          "focus-ring inline-flex items-center justify-center gap-2 rounded-none font-extrabold transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none uppercase tracking-tight",
-          variant === "primary" &&
-            "bg-white text-black border-2 border-white hover:bg-black hover:text-white shadow-none",
-          variant === "ghost" &&
-            "bg-black text-[var(--color-mist-100)] hover:bg-neutral-900 border border-neutral-800",
-          variant === "outline" &&
-            "border-2 border-white text-white bg-black hover:bg-white hover:text-black",
-          size === "sm" && "px-4 py-2 text-xs",
-          size === "md" && "px-6 py-3 text-sm",
-          size === "lg" && "px-8 py-4 text-base",
+          "focus-ring inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none uppercase tracking-tight",
+          {
+            "glass-button-primary text-xs px-4 py-2": variant === "primary" && size === "sm",
+            "glass-button-primary text-sm px-6 py-3": variant === "primary" && size === "md",
+            "glass-button-primary text-base px-8 py-4": variant === "primary" && size === "lg",
+            "glass-button-ghost text-xs px-4 py-2": variant === "ghost" && size === "sm",
+            "glass-button-ghost text-sm px-6 py-3": variant === "ghost" && size === "md",
+            "glass-button-ghost text-base px-8 py-4": variant === "ghost" && size === "lg",
+            "glass-button-ghost text-xs px-4 py-2 bg-transparent border-white/10 hover:bg-white/5": variant === "outline" && size === "sm",
+            "glass-button-ghost text-sm px-6 py-3 bg-transparent border-white/10 hover:bg-white/5": variant === "outline" && size === "md",
+            "glass-button-ghost text-base px-8 py-4 bg-transparent border-white/10 hover:bg-white/5": variant === "outline" && size === "lg",
+            "glass-button-ghost text-xs px-4 py-2 bg-white/5 border-white/10 hover:bg-white/10": variant === "glass" && size === "sm",
+            "glass-button-ghost text-sm px-6 py-3 bg-white/5 border-white/10 hover:bg-white/10": variant === "glass" && size === "md",
+            "glass-button-ghost text-base px-8 py-4 bg-white/5 border-white/10 hover:bg-white/10": variant === "glass" && size === "lg",
+          },
           className
         )}
         {...props}
@@ -29,4 +35,5 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     );
   }
 );
+
 Button.displayName = "Button";

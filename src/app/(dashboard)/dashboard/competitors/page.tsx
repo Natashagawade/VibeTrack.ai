@@ -3,8 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireOrg } from "@/lib/authz";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Badge } from "@/components/ui/badge";
-
-export const dynamic = "force-dynamic";
+import { TrendingUp, TrendingDown, Minus, AlertTriangle } from "lucide-react";
 
 async function getCompetitorRows(orgId: string, names: string[]) {
   const now = Date.now();
@@ -38,6 +37,8 @@ async function getCompetitorRows(orgId: string, names: string[]) {
   return rows;
 }
 
+export const dynamic = "force-dynamic";
+
 export default async function CompetitorsPage() {
   const ctx = await requireOrg();
   const org = await prisma.organization.findUnique({
@@ -52,10 +53,10 @@ export default async function CompetitorsPage() {
 
   return (
     <>
-      <div className="flex items-center justify-between border-b border-white/5 px-6 py-4">
+      <div className="flex items-center justify-between border-b border-white/5 px-6 py-4 bg-[var(--color-bg-elevated)]/60 backdrop-blur-xl">
         <div>
           <h1 className="font-[family-name:var(--font-display)] text-lg font-semibold">Competitors</h1>
-          <p className="text-sm text-[var(--color-mist-400)]">
+          <p className="text-sm text-[var(--color-text-secondary)]">
             Mentions of competitors across your customer feedback, tracked week over week.
           </p>
         </div>
@@ -63,10 +64,10 @@ export default async function CompetitorsPage() {
 
       <div className="space-y-4 p-6">
         {!shown ? (
-          <GlassCard className="flex flex-col items-center gap-4 p-16 text-center">
-            <Building2 className="h-8 w-8 text-[var(--color-mist-400)]" />
+          <GlassCard variant="interactive" className="flex flex-col items-center gap-4 p-12 text-center max-w-2xl mx-auto animate-fade-in-up">
+            <Building2 className="h-8 w-8 text-[var(--color-text-muted)]" />
             <h2 className="font-[family-name:var(--font-display)] text-lg font-semibold">No competitors configured</h2>
-            <p className="max-w-md text-sm text-[var(--color-mist-400)]">
+            <p className="max-w-md text-sm text-[var(--color-text-muted)]">
               Add competitor names to your workspace to start tracking when customers mention them. Competitor
               intelligence will surface matching signals and flag churn risk.
             </p>
@@ -74,16 +75,32 @@ export default async function CompetitorsPage() {
         ) : (
           rows.map((row) => {
             const delta = row.recent7 - row.previous7;
+            const deltaPct = row.previous7 > 0 ? Math.round((delta / row.previous7) * 100) : 0;
             return (
-              <GlassCard key={row.name} className="p-6">
+              <GlassCard key={row.name} variant="interactive" className="p-6 animate-fade-in-up">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
                     <h2 className="font-[family-name:var(--font-display)] text-base font-semibold">{row.name}</h2>
-                    <p className="mt-1 text-sm text-[var(--color-mist-400)]">
+                    <p className="mt-1 text-sm text-[var(--color-text-muted)]">
                       {row.total.toLocaleString()} total mention{row.total === 1 ? "" : "s"} ·{" "}
                       {row.recent7} in last 7 days
-                      <span className={delta > 0 ? " ml-2 text-[var(--color-signal-negative)]" : delta < 0 ? " ml-2 text-[var(--color-signal-positive)]" : " ml-2 text-[var(--color-mist-400)]"}>
-                        {delta > 0 ? `▲ +${delta}` : delta < 0 ? `▼ ${delta}` : "— ±0"} vs previous week
+                      <span className={delta > 0 ? " ml-2 text-[var(--color-signal-negative)]" : delta < 0 ? " ml-2 text-[var(--color-signal-positive)]" : " ml-2 text-[var(--color-text-muted)]"}>
+                        {delta > 0 ? (
+                          <>
+                            <TrendingUp className="h-3 w-3 inline mr-1" />
+                            +{delta} ({deltaPct}%)
+                          </>
+                        ) : delta < 0 ? (
+                          <>
+                            <TrendingDown className="h-3 w-3 inline mr-1" />
+                            {delta} ({deltaPct}%)
+                          </>
+                        ) : (
+                          <>
+                            <Minus className="h-3 w-3 inline mr-1" />
+                            — ±0
+                          </>
+                        )} vs previous week
                       </span>
                     </p>
                   </div>
@@ -92,12 +109,20 @@ export default async function CompetitorsPage() {
                 {row.signals.length > 0 && (
                   <div className="mt-4 space-y-1.5">
                     {row.signals.map((s) => (
-                      <p key={s.id} className="rounded-lg border border-white/5 bg-white/[0.03] px-3 py-2 text-xs text-[var(--color-mist-300)]">
-                        “{s.text}”{" "}
-                        <span className="ml-1 text-[var(--color-mist-400)]">
-                          · {new Date(s.receivedAt).toLocaleDateString()}
-                        </span>
-                      </p>
+                      <div key={s.id} className="glass-panel-subtle rounded-lg p-3 hover:glass-panel transition-all duration-200">
+                        <p className="text-xs text-[var(--color-text-primary)]">"{s.text.slice(0, 200)}"</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge 
+                            tone={s.sentiment?.label === "Positive" ? "positive" : s.sentiment?.label === "Negative" ? "negative" : "neutral"} 
+                            className="text-[10px]"
+                          >
+                            {s.sentiment?.label ?? "Neutral"}
+                          </Badge>
+                          <span className="text-[10px] text-[var(--color-text-muted)]">
+                            {new Date(s.receivedAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
                     ))}
                   </div>
                 )}

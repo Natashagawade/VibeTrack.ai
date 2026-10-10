@@ -40,8 +40,10 @@ export function Dropzone({
         handleFiles(e.dataTransfer.files);
       }}
       className={cn(
-        "focus-ring flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed p-10 text-center transition-colors",
-        dragging ? "border-[var(--color-aurora-cyan)] bg-white/5" : "border-white/15 hover:border-white/25"
+        "focus-ring flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-8 text-center transition-all duration-300",
+        dragging
+          ? "border-[var(--color-accent-cyan)] bg-[var(--color-accent-cyan)]/5 bg-gradient-to-br from-[var(--color-accent-cyan)]/10 to-transparent"
+          : "border-white/10 hover:border-white/20 hover:bg-white/5"
       )}
     >
       <input
@@ -51,11 +53,11 @@ export function Dropzone({
         className="hidden"
         onChange={(e) => handleFiles(e.target.files)}
       />
-      <UploadCloud className="h-7 w-7 text-[var(--color-aurora-cyan)]" />
-      <div className="text-sm font-medium text-[var(--color-mist-100)]">
+      <UploadCloud className="h-8 w-8 text-[var(--color-accent-cyan)]" />
+      <div className="text-sm font-medium text-[var(--color-text-primary)]">
         {fileName ?? label}
       </div>
-      <div className="text-xs text-[var(--color-mist-400)]">{hint}</div>
+      <div className="text-xs text-[var(--color-text-muted)]">{hint}</div>
     </div>
   );
 }
