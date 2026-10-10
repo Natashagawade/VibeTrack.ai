@@ -35,7 +35,7 @@ export function Pricing() {
     <section id="pricing" className="mx-auto max-w-7xl px-6 py-24">
       <div className="mb-14 text-center">
         <span className="text-xs uppercase tracking-widest font-bold text-[var(--color-accent-cyan)]">Pricing</span>
-        <h2 className="mt-3 font-[family-name:var(--font-display)] text-5xl font-black uppercase tracking-tighter text-gradient-accent">
+        <h2 className="mt-3 font-[family-name:var(--font-display)] text-2xl font-semibold tracking-tight">
           Simple, usage-based plans
         </h2>
       </div>
@@ -51,15 +51,15 @@ export function Pricing() {
             style={{ animationDelay: `${index * 0.1}s` }}
           >
             {plan.highlighted && (
-              <span className="mb-4 w-fit glass-badge px-3 py-1 text-[10px] font-black uppercase tracking-wider text-[var(--color-accent-cyan)] border-[var(--color-accent-cyan)]/30">
+              <span className="mb-4 w-fit glass-badge px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-primary)] border-white/30">
                 Most popular
               </span>
             )}
-            <h3 className="font-[family-name:var(--font-display)] text-2xl font-black uppercase tracking-tight">{plan.name}</h3>
-            <p className="mt-1 text-sm font-medium text-[var(--color-text-secondary)]">{plan.desc}</p>
+            <h3 className="font-[family-name:var(--font-display)] text-lg font-semibold">{plan.name}</h3>
+            <p className="mt-1 text-sm text-[var(--color-text-secondary)]">{plan.desc}</p>
             <div className="mt-6 flex items-baseline gap-1">
-              <span className="font-[family-name:var(--font-display)] text-5xl font-black text-gradient-accent">{plan.price}</span>
-              <span className="text-sm font-bold text-[var(--color-text-muted)]">{plan.period}</span>
+              <span className="font-[family-name:var(--font-display)] text-2xl font-semibold">{plan.price}</span>
+              <span className="text-sm text-[var(--color-text-muted)]">{plan.period}</span>
             </div>
             <ul className="mt-6 flex-1 space-y-3">
               {plan.features.map((f) => (

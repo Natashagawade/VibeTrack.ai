@@ -18,7 +18,7 @@ and the smart empty states tell you exactly how to start.
 
 ```
 Feedback (any channel)
-        │  capture: text, CSV/Excel, URL, image, audio, video, documents, …
+        │  capture: text, CSV/Excel, URL, image, audio, documents, …
         ▼
 CustomerSignal  ── normalized + sha256-deduplicated + classified
         │         intent (complaint / refund / cancel / feature_request / praise / question)
@@ -73,11 +73,11 @@ npx prisma migrate deploy # optional — only if you have your own DATABASE_URL
 npm run dev
 ```
 
-Open http://localhost:3000. Everything in the capture tools runs on the local
-engine with zero keys. Add `OPENAI_API_KEY` to unlock AI-graded scoring,
-Whisper transcription, and vision. Add `DATABASE_URL` to enable sign-up/sign-in
-and real persistence (until then the app shows a demo-mode banner). Set a real
-`AUTH_SECRET` before deploying.
+Open http://localhost:3000. The app is public — there is no sign-in. Everything
+in the capture tools runs on the local engine with zero keys. Add
+`OPENAI_API_KEY` to unlock AI-graded scoring, Whisper transcription, and vision.
+Add `DATABASE_URL` to persist signals and intelligence (until then the app shows
+a note that nothing is being saved).
 
 ### With Docker
 
@@ -104,12 +104,12 @@ build on every push.
 | Signal pipeline + dedupe + classification | **Real** — `ingestSignal` persists every analyzed input as a CustomerSignal |
 | Intelligence (issues, insights, risk, competitors, actions) | **Real** — deterministic engines over stored signals, unit-tested |
 | Dashboard (Overview, Signals, Issues, Insights, Customers, Competitors, Opportunities, Actions, Integrations) | **Real** — server-rendered from your org's data with honest empty states |
-| Auth & tenancy (credentials + Google/GitHub, org auto-provisioning) | **Real** — tested against the live Neon DB |
-| API (analyze/text, signals, intelligence, insights, bearer keys) | **Real** — bearer key + session auth, audit-logged |
-| Capture tools | Text, CSV/Excel, URL, Images (OCR) run on the local engine. Audio/Video need OpenAI (Whisper/vision); Document & Media connectors are thin shells |
+| Auth & tenancy (org auto-provisioning, shared public workspace) | **Real** — tested against the live Neon DB |
+| API (analyze/text, signals, intelligence, insights, bearer keys) | **Real** — bearer key + shared-workspace auth, audit-logged |
+| Capture tools | Text, CSV/Excel, URL, Images (OCR + on-device facial expression) run locally. Audio needs OpenAI Whisper; AI caption/scene labels need a vision key. Document connectors are thin shells |
 | External connectors (Zendesk, Intercom, Slack, Jira, Linear) | **Schema + Integrations UI only** — rows are `NOT_CONFIGURED`; no live OAuth connector yet |
 | Ask VibeTrack (chat over your data) | **Not built** — the Signals/search UX is the placeholder |
-| Social listening, brand monitoring, video timelines | **Not implemented** — pages exist and are labeled honestly |
+| Social listening | **Not implemented** — page exists and is labeled honestly. Brand monitoring **is** real, over your own signals |
 | Rate limiting | In-memory, single-instance — swap for Redis-backed before running >1 instance |
 
 ## Repository layout

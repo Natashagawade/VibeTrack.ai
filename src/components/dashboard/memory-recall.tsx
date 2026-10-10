@@ -41,10 +41,12 @@ const TYPE_LABEL: Record<string, string> = {
   LESSON: "Lesson",
 };
 
-const LABEL_TONE: Record<RecallResponse["label"], "positive" | "neutral" | "negative" | "aurora" | "cyan" | "violet"> = {
+import type { BadgeTone } from "@/components/ui/badge";
+
+const LABEL_TONE: Record<RecallResponse["label"], BadgeTone> = {
   Actual: "positive",
-  Estimated: "violet",
-  Predicted: "cyan",
+  Estimated: "neutral",
+  Predicted: "neutral",
   Demo: "negative",
 };
 

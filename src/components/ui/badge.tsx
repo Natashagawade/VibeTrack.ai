@@ -1,23 +1,26 @@
 import { cn } from "@/lib/utils";
 import { HTMLAttributes } from "react";
 
+export type BadgeTone = "neutral" | "positive" | "negative";
+
+/**
+ * Monochrome badge. Positive reads as solid white (present, resolved), negative
+ * as outline-only, neutral as muted text — the distinction is value and fill
+ * rather than hue.
+ */
 export function Badge({
   className,
   tone = "neutral",
   ...props
-}: HTMLAttributes<HTMLSpanElement> & { tone?: "neutral" | "positive" | "negative" | "aurora" | "cyan" | "violet" | "amber" }) {
+}: HTMLAttributes<HTMLSpanElement> & { tone?: BadgeTone }) {
   return (
     <span
       className={cn(
-        "glass-badge inline-flex items-center rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-wider transition-all duration-200",
+        "glass-badge inline-flex items-center gap-1 rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-wider transition-colors duration-200",
         {
-          "border-white/10 text-[var(--color-text-secondary)]": tone === "neutral",
-          "bg-[var(--color-signal-positive)]/20 border-[var(--color-signal-positive)]/30 text-[var(--color-signal-positive)]": tone === "positive",
-          "bg-[var(--color-signal-negative)]/20 border-[var(--color-signal-negative)]/30 text-[var(--color-signal-negative)]": tone === "negative",
-          "bg-gradient-to-r from-[var(--color-accent-cyan)]/20 to-[var(--color-accent-violet)]/20 border-[var(--color-accent-cyan)]/30 text-[var(--color-accent-cyan)]": tone === "aurora",
-          "bg-[var(--color-accent-cyan)]/20 border-[var(--color-accent-cyan)]/30 text-[var(--color-accent-cyan)]": tone === "cyan",
-          "bg-[var(--color-accent-violet)]/20 border-[var(--color-accent-violet)]/30 text-[var(--color-accent-violet)]": tone === "violet",
-          "bg-[var(--color-accent-amber)]/20 border-[var(--color-accent-amber)]/30 text-[var(--color-accent-amber)]": tone === "amber",
+          "border-white/10 text-[var(--color-text-muted)]": tone === "neutral",
+          "border-white/60 bg-white text-black": tone === "positive",
+          "border-white/40 text-[var(--color-text-secondary)]": tone === "negative",
         },
         className
       )}

@@ -1,41 +1,18 @@
 import type { NextAuthConfig } from "next-auth";
-import Google from "next-auth/providers/google";
-import GitHub from "next-auth/providers/github";
-
-const providers: NextAuthConfig["providers"] = [];
-
-if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-  providers.push(
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    })
-  );
-}
-
-if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
-  providers.push(
-    GitHub({
-      clientId: process.env.GITHUB_CLIENT_ID,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET,
-    })
-  );
-}
 
 /**
- * Edge-runtime-safe config: OAuth providers + session callbacks only.
- * Deliberately excludes the Credentials provider (needs bcrypt) and the
- * Prisma adapter (needs a Node-only DB driver) — both of those only run in
- * `src/lib/auth.ts`, which executes in the Node runtime (API routes, server
- * components), never inside Edge Middleware. Importing Prisma/bcrypt into
- * middleware.ts is a common Auth.js + Prisma pitfall; this split avoids it.
+ * Edge-runtime-safe config.
+ *
+ * The app is public — there is no sign-in page — so no OAuth providers are
+ * registered. The Credentials provider and the Prisma adapter live in
+ * `src/lib/auth.ts`, which only ever runs in the Node runtime (API routes,
+ * server components), never in Edge Middleware.
  */
 export const authConfig = {
   session: { strategy: "jwt" },
-  providers,
+  providers: [],
   pages: {
-    signIn: "/sign-in",
-    newUser: "/dashboard",
+    signIn: "/",
   },
   callbacks: {
     async jwt({ token, user }) {

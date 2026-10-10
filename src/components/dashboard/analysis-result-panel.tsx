@@ -73,7 +73,7 @@ export function AnalysisResultPanel({ result }: { result: FullTextAnalysis }) {
           <h3 className="mb-3 font-[family-name:var(--font-display)] text-base font-semibold">Keywords</h3>
           <div className="flex flex-wrap gap-2">
             {result.keywords.map((k) => (
-              <Badge key={k.word} tone="cyan">{k.word} · {k.count}</Badge>
+              <Badge key={k.word} tone="neutral">{k.word} · {k.count}</Badge>
             ))}
             {result.keywords.length === 0 && (
               <span className="text-sm text-[var(--color-text-muted)]">No strong keywords detected.</span>

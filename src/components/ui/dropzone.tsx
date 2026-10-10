@@ -42,8 +42,8 @@ export function Dropzone({
       className={cn(
         "focus-ring flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-8 text-center transition-all duration-300",
         dragging
-          ? "border-[var(--color-accent-cyan)] bg-[var(--color-accent-cyan)]/5 bg-gradient-to-br from-[var(--color-accent-cyan)]/10 to-transparent"
-          : "border-white/10 hover:border-white/20 hover:bg-white/5"
+          ? "border-white bg-white/10"
+          : "border-white/15 hover:border-white/30 hover:bg-white/5"
       )}
     >
       <input

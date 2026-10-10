@@ -1,56 +1,56 @@
 @import "tailwindcss";
 
 @theme {
-  /* Glassmorphism color system */
-  --color-bg-base: #0a0a0f;
-  --color-bg-elevated: #11111a;
-  --color-glass-light: rgba(255, 255, 255, 0.06);
-  --color-glass-medium: rgba(255, 255, 255, 0.1);
-  --color-glass-strong: rgba(255, 255, 255, 0.15);
-  --color-glass-border: rgba(255, 255, 255, 0.12);
-  --color-glass-border-strong: rgba(255, 255, 255, 0.2);
-  
-  --color-text-primary: #fafafa;
-  --color-text-secondary: #a0a0b0;
-  --color-text-muted: #6b6b7a;
-  
-  --color-accent-cyan: #00e5d0;
-  --color-accent-violet: #a855f7;
-  --color-accent-pink: #f472b6;
-  --color-accent-amber: #fbbf24;
-  --color-accent-emerald: #34d399;
-  --color-accent-red: #f87171;
-  
-  --color-signal-positive: #34d399;
-  --color-signal-negative: #f87171;
-  --color-signal-neutral: #a0a0b0;
-  
-  /* Backward compatibility aliases for existing components */
+  /* Monochrome design system — black, white and greys only */
+  --color-bg-base: #000000;
+  --color-bg-elevated: #0a0a0a;
+
+  --color-glass-light: rgba(255, 255, 255, 0.05);
+  --color-glass-medium: rgba(255, 255, 255, 0.09);
+  --color-glass-strong: rgba(255, 255, 255, 0.14);
+  --color-glass-border: rgba(255, 255, 255, 0.14);
+  --color-glass-border-strong: rgba(255, 255, 255, 0.28);
+
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #b8b8b8;
+  --color-text-muted: #808080;
+
+  /* Accents collapse to white; signal colours differ in value only */
+  --color-accent-cyan: #ffffff;
+  --color-accent-violet: #ffffff;
+  --color-accent-pink: #ffffff;
+  --color-accent-amber: #d4d4d4;
+  --color-accent-emerald: #ffffff;
+  --color-accent-red: #8a8a8a;
+
+  --color-signal-positive: #ffffff;
+  --color-signal-negative: #8f8f8f;
+  --color-signal-neutral: #b0b0b0;
+  --color-signal-warning: #d4d4d4;
+
+  /* Backward-compatibility aliases used across the dashboard */
   --color-void-950: #000000;
   --color-void-900: #000000;
   --color-void-800: #0a0a0a;
   --color-void-700: #171717;
   --color-void-600: #262626;
-  --color-mist-400: #a0a0b0;
+  --color-mist-400: #b8b8b8;
   --color-mist-300: #d4d4d4;
-  --color-mist-200: #e4e4e7;
-  --color-mist-100: #fafafa;
-  --color-mist-500: #71717a;
-  
-  --color-aurora-violet: #a855f7;
-  --color-aurora-cyan: #00e5d0;
-  --color-aurora-pink: #f472b6;
-  --color-aurora-amber: #fbbf24;
-  
-  --color-signal-warning: #fbbf24;
-  
-  --font-display: "Space Grotesk", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --color-mist-200: #e4e4e4;
+  --color-mist-100: #ffffff;
+  --color-mist-500: #808080;
+  --color-aurora-violet: #ffffff;
+  --color-aurora-cyan: #ffffff;
+  --color-aurora-pink: #ffffff;
+  --color-aurora-amber: #d4d4d4;
+
+  --font-display: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
-  
-  --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.3);
-  --shadow-glass-hover: 0 12px 40px rgba(0, 0, 0, 0.4);
-  --shadow-inner-glass: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+
+  --shadow-glass: 0 1px 2px rgba(0, 0, 0, 0.6);
+  --shadow-glass-hover: 0 2px 8px rgba(0, 0, 0, 0.7);
+  --shadow-inner-glass: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 html {
@@ -62,35 +62,31 @@ body {
   color: var(--color-text-primary);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
-  background-image: 
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(168, 85, 247, 0.15), transparent),
-    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(0, 229, 208, 0.1), transparent);
-  background-attachment: fixed;
 }
 
 ::selection {
-  background: var(--color-accent-cyan);
-  color: var(--color-bg-base);
+  background: #ffffff;
+  color: #000000;
 }
 
-/* Glassmorphism utility classes */
+/* ---------- Surfaces ---------- */
+
 .glass-panel {
-  background: var(--color-glass-light);
+  background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--color-glass-border);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   box-shadow: var(--shadow-glass), var(--shadow-inner-glass);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .glass-panel:hover {
-  background: var(--color-glass-medium);
+  background: rgba(255, 255, 255, 0.08);
   border-color: var(--color-glass-border-strong);
-  box-shadow: var(--shadow-glass-hover), var(--shadow-inner-glass);
 }
 
 .glass-panel-strong {
-  background: var(--color-glass-medium);
+  background: rgba(255, 255, 255, 0.1);
   border: 1px solid var(--color-glass-border-strong);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
@@ -98,113 +94,98 @@ body {
 }
 
 .glass-panel-subtle {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
 }
 
-/* Hover lift for rows/cards that are not already glass */
+/* Hover for rows/cards that are not already glass */
 .hover-glass {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .hover-glass:hover {
-  background: var(--color-glass-light);
+  background: rgba(255, 255, 255, 0.06);
   border-color: var(--color-glass-border-strong);
-  box-shadow: var(--shadow-glass), var(--shadow-inner-glass);
 }
 
 .glass-card-interactive {
-  background: var(--color-glass-light);
+  background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--color-glass-border);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   box-shadow: var(--shadow-glass), var(--shadow-inner-glass);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .glass-card-interactive:hover {
-  background: var(--color-glass-medium);
+  background: rgba(255, 255, 255, 0.08);
   border-color: var(--color-glass-border-strong);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-glass-hover), var(--shadow-inner-glass);
 }
+
+/* ---------- Controls ---------- */
 
 .glass-input {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--color-glass-border);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .glass-input:focus {
   background: rgba(255, 255, 255, 0.08);
-  border-color: var(--color-accent-cyan);
-  box-shadow: 0 0 0 3px rgba(0, 229, 208, 0.2);
+  border-color: rgba(255, 255, 255, 0.6);
   outline: none;
 }
 
 .glass-button-primary {
-  background: linear-gradient(135deg, var(--color-accent-cyan), var(--color-accent-violet));
-  border: none;
-  color: var(--color-bg-base);
-  font-weight: 700;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 16px rgba(0, 229, 208, 0.3);
+  background: #ffffff;
+  color: #000000;
+  font-weight: 600;
+  transition: opacity 0.15s ease;
 }
 
 .glass-button-primary:hover {
-  box-shadow: 0 6px 24px rgba(0, 229, 208, 0.4);
-  transform: translateY(-1px);
+  opacity: 0.85;
 }
 
 .glass-button-primary:active {
-  transform: translateY(0);
+  opacity: 1;
 }
 
 .glass-button-ghost {
   background: transparent;
   border: 1px solid var(--color-glass-border);
   color: var(--color-text-primary);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .glass-button-ghost:hover {
-  background: var(--color-glass-light);
+  background: rgba(255, 255, 255, 0.07);
   border-color: var(--color-glass-border-strong);
 }
 
 .glass-badge {
-  background: var(--color-glass-light);
+  background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--color-glass-border);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
 }
 
-.text-gradient-accent {
-  background: linear-gradient(135deg, var(--color-accent-cyan), var(--color-accent-violet), var(--color-accent-pink));
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
+/* Gradient text is impossible in a monochrome palette, so this is now just white. */
+.text-gradient-accent,
 .text-gradient-aurora {
-  background: linear-gradient(135deg, var(--color-aurora-cyan), var(--color-aurora-violet));
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #ffffff;
+  -webkit-text-fill-color: currentColor;
 }
 
 .focus-ring:focus-visible {
-  outline: 2px solid var(--color-accent-cyan);
+  outline: 2px solid #ffffff;
   outline-offset: 2px;
 }
 
-/* Scrollbar styling */
+/* ---------- Scrollbar ---------- */
+
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -215,20 +196,20 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-glass-medium);
+  background: rgba(255, 255, 255, 0.16);
   border-radius: 4px;
-  border: 2px solid var(--color-bg-base);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-glass-strong);
+  background: rgba(255, 255, 255, 0.3);
 }
 
-/* Animation utilities */
+/* ---------- Motion ---------- */
+
 @keyframes fade-in-up {
   from {
     opacity: 0;
-    transform: translateY(16px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -236,29 +217,16 @@ body {
   }
 }
 
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
 .animate-fade-in-up {
-  animation: fade-in-up 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation: fade-in-up 0.32s ease-out forwards;
 }
 
-.animate-shimmer {
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-  background-size: 200% 100%;
-  animation: shimmer 2s infinite;
-}
+.delay-1 { animation-delay: 0.04s; }
+.delay-2 { animation-delay: 0.08s; }
+.delay-3 { animation-delay: 0.12s; }
+.delay-4 { animation-delay: 0.16s; }
+.delay-5 { animation-delay: 0.2s; }
 
-/* Staggered animation delays */
-.delay-1 { animation-delay: 0.05s; }
-.delay-2 { animation-delay: 0.1s; }
-.delay-3 { animation-delay: 0.15s; }
-.delay-4 { animation-delay: 0.2s; }
-.delay-5 { animation-delay: 0.25s; }
-
-/* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

@@ -165,18 +165,18 @@ export default function ImageAnalysisPage() {
 
             <div className="space-y-4 lg:col-span-2">
               {insight?.faceEmotion && !insight.faceEmotion.lowConfidence && (
-                <GlassCard variant="interactive" className="p-6 animate-fade-in-up delay-1 border-[var(--color-accent-violet)]/30 bg-gradient-to-br from-[var(--color-accent-violet)]/5 to-transparent">
+                <GlassCard variant="interactive" className="p-6 animate-fade-in-up delay-1">
                   <div className="mb-4 flex items-center justify-between">
                     <div className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)]">
                       <Smile className="h-4 w-4" /> Facial expression
                     </div>
-                    <Badge tone="violet">
+                    <Badge tone="neutral">
                       {insight.faceEmotion.faces} face{insight.faceEmotion.faces === 1 ? "" : "s"} · on-device
                     </Badge>
                   </div>
 
                   <div className="mb-4 flex items-baseline gap-3">
-                    <span className="font-[family-name:var(--font-display)] text-3xl font-bold text-gradient-accent">
+                    <span className="font-[family-name:var(--font-display)] text-2xl font-semibold">
                       {EMOTION_LABEL[insight.faceEmotion.dominant.label]}
                     </span>
                     <span className="text-sm text-[var(--color-text-secondary)]">
@@ -188,9 +188,9 @@ export default function ImageAnalysisPage() {
                     {insight.faceEmotion.emotions.map((e) => (
                       <div key={e.emotion} className="flex items-center gap-3">
                         <span className="w-20 shrink-0 text-xs text-[var(--color-text-secondary)]">{e.emotion}</span>
-                        <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/5">
+                        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/10">
                           <div
-                            className="h-full rounded-full bg-gradient-to-r from-[var(--color-accent-violet)] to-[var(--color-accent-cyan)]"
+                            className="h-full rounded-full bg-white"
                             style={{ width: `${Math.round(e.intensity * 100)}%` }}
                           />
                         </div>
@@ -335,7 +335,7 @@ export default function ImageAnalysisPage() {
                   <div className="text-xs text-[var(--color-text-muted)]">Objects</div>
                   <div className="mt-1 flex flex-wrap gap-1.5">
                     {vision.objects.map((o) => (
-                      <Badge key={o} tone="cyan">{o}</Badge>
+                      <Badge key={o} tone="neutral">{o}</Badge>
                     ))}
                   </div>
                 </GlassCard>

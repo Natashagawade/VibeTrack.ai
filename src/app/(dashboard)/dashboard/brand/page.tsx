@@ -240,7 +240,7 @@ export default async function BrandMonitorPage() {
                                 <span>{comp.lastMonth} this month</span>
                               </div>
                             </div>
-                            <Badge tone={comp.riskLevel === "HIGH" ? "negative" : comp.riskLevel === "MEDIUM" ? "amber" : "positive"}>
+                            <Badge tone={comp.riskLevel === "HIGH" ? "negative" : comp.riskLevel === "MEDIUM" ? "neutral" : "positive"}>
                               Risk: {comp.riskLevel} ({comp.riskScore})
                             </Badge>
                           </div>
@@ -266,7 +266,7 @@ export default async function BrandMonitorPage() {
                             <div className="mt-4 flex flex-wrap gap-2">
                               <span className="text-xs text-[var(--color-text-muted)]">Top issues:</span>
                               {comp.topIssues.map((issue: any) => (
-                                <Badge key={issue.issueCategory} tone="cyan" className="gap-1">
+                                <Badge key={issue.issueCategory} tone="neutral" className="gap-1">
                                   {issue.issueCategory} ({issue._count})
                                 </Badge>
                               ))}

@@ -66,7 +66,7 @@ export default async function ActionsPage() {
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <h3 className="font-[family-name:var(--font-display)] text-base font-semibold">{a.title}</h3>
-                          <Badge tone="aurora">{a.priority}</Badge>
+                          <Badge tone="neutral">{a.priority}</Badge>
                           <span className="text-xs text-[var(--color-mist-400)]">
                             {a.type.toLowerCase().replaceAll("_", " ")}
                           </span>

@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { resolveUserOrg } from "@/lib/org";
+import { resolveSharedOrg } from "@/lib/org";
 
 export type SignalScope = {
   userId: string;
@@ -23,8 +23,8 @@ export function hashApiKey(key: string): string {
  * Resolves who is calling a signals API and which tenant they may touch.
  * Two accepted clients:
  *  - `Authorization: Bearer <apiKey>`  (server API keys, stored hashed)
- *  - the signed-in session (dashboard)
- * Returns null when neither auth path resolves.
+ *  - the signed-in session, when one exists
+ *  - anything else: the public shared workspace
  */
 export async function resolveRequestScope(request: Request): Promise<SignalScope | null> {
   const authorization = request.headers.get("authorization");
@@ -40,16 +40,14 @@ export async function resolveRequestScope(request: Request): Promise<SignalScope
     return { userId: record.userId, orgId: record.orgId, auth: "apikey" };
   }
 
-  const session = await auth();
+  const session = await auth().catch(() => null);
   const user = session?.user;
-  if (!user?.id) return null;
-
-  if (user.orgId) {
+  if (user?.id && user.orgId) {
     return { userId: user.id, orgId: user.orgId, auth: "session" };
   }
 
-  const ctx = await resolveUserOrg(user.id, user.email, user.name);
-  return { userId: user.id, orgId: ctx.orgId, auth: "session" };
+  const shared = await resolveSharedOrg();
+  return { userId: "", orgId: shared.orgId, auth: "session" };
 }
 
 /** Convenience: tenant-filter scope for CustomerSignal queries. */

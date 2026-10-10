@@ -30,33 +30,44 @@ local, deterministic implementation where one exists → always return a
 result with an `engine` field so the UI can be honest about what produced
 it.
 
-## Auth split (Edge vs. Node)
+## Public access — no sign-in
+
+The app has no login. `src/lib/authz.ts` `getAuthContext()` resolves the tenant:
+
+- a signed-in session, if one exists (legacy cookies), gets its own org;
+- everyone else lands in the **shared workspace** returned by
+  `resolveSharedOrg()` in `src/lib/org.ts`.
+
+`resolveSharedOrg()` is deterministic rather than invented: it adopts the
+existing workspace that already holds the most signals, and only creates a new
+`default-workspace` when the database has no signals at all. So the dashboard
+is never empty by accident, and no data is fabricated.
+
+Same rule for the signals API: `src/lib/signals/auth.ts` accepts
+`Authorization: Bearer <apiKey>`, then a session, then falls back to the shared
+workspace.
+
+### Auth split (Edge vs. Node)
 
 ```
-src/lib/auth.config.ts   — OAuth providers + JWT callbacks only.
-                            No Prisma, no bcrypt. Edge-safe.
-                            Used by: src/proxy.ts (middleware)
-
+src/lib/auth.config.ts   — JWT session callbacks. No Prisma, no bcrypt.
 src/lib/auth.ts          — auth.config.ts + Credentials provider (bcrypt)
                             + PrismaAdapter. Node-runtime only.
                             Used by: API routes, server components
 ```
 
 This split exists because Prisma Client and bcrypt both need Node APIs that
-aren't available in Next.js Edge Middleware — a common Auth.js + Prisma
-pitfall. Importing the full `auth.ts` from `proxy.ts` would break the edge
-bundle.
+aren't available in Next.js Edge Middleware — a common Auth.js + Prisma pitfall.
 
 ## Folder structure
 
 ```
 src/
   app/
-    (auth)/            sign-in, sign-up — route group, no shared layout chrome
-    (dashboard)/        dashboard/*     — route group, shared sidebar+auth-gate layout
+    (dashboard)/        dashboard/*     — route group, shared sidebar layout
     api/
       analyze/{text,audio,image,url}   — AI-backed analysis routes
-      auth/{[...nextauth],register}    — Auth.js + credential signup
+      auth/[...nextauth]               — Auth.js session + CSRF
       config/            — reports which env keys are set (booleans only)
       health/            — liveness probe
   components/

@@ -332,7 +332,7 @@ export default function ImportPage() {
                       <span className="font-medium text-[var(--color-text-primary)]">{header}</span>
                       {isText && <Badge tone="positive">Feedback text</Badge>}
                       {detectedInfo && detectedInfo.target !== "ignore" && detectedInfo.confidence >= 0.9 && (
-                        <Badge tone="cyan">confident</Badge>
+                        <Badge tone="neutral">confident</Badge>
                       )}
                     </div>
                     <div className="mt-0.5 truncate text-xs text-[var(--color-text-muted)]">

@@ -48,7 +48,7 @@ function NavLink({ href, label, icon: Icon }: { href: string; label: string; ico
       className={cn(
         "focus-ring flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
         active
-          ? "glass-panel-strong text-[var(--color-text-primary)] shadow-[0_0_0_1px_rgba(0,229,208,0.3)]"
+          ? "bg-white/10 text-[var(--color-text-primary)] border border-white/20"
           : "text-[var(--color-text-secondary)] hover-glass hover:text-[var(--color-text-primary)]"
       )}
     >
@@ -62,10 +62,10 @@ export function Sidebar() {
   return (
     <aside className="hidden h-screen w-64 shrink-0 flex-col border-r border-white/5 bg-[var(--color-bg-elevated)]/80 backdrop-blur-xl p-4 lg:flex">
       <Link href="/" className="mb-8 flex items-center gap-2 px-2 font-[family-name:var(--font-display)] text-base font-semibold">
-        <div className="h-6 w-6 rounded-lg bg-gradient-to-br from-[var(--color-accent-cyan)] to-[var(--color-accent-violet)] flex items-center justify-center">
-          <Waves className="h-4 w-4 text-[var(--color-bg-base)]" />
+        <div className="h-6 w-6 rounded-md bg-white flex items-center justify-center">
+          <Waves className="h-4 w-4 text-black" />
         </div>
-        <span className="text-gradient-accent">VibeTrack</span>
+        <span>VibeTrack</span>
       </Link>
       <nav className="flex-1 space-y-1 overflow-y-auto">
         <SectionLabel className="px-2 py-2">Intelligence</SectionLabel>

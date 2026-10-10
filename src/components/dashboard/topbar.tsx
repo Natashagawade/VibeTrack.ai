@@ -18,7 +18,7 @@ export function Topbar({ title }: { title: string }) {
             <Bell className="h-5 w-5 text-[var(--color-text-secondary)]" />
             <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-[var(--color-accent-pink)] border-2 border-[var(--color-bg-base)]" />
           </button>
-          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[var(--color-accent-violet)] to-[var(--color-accent-cyan)]" />
+          <div className="h-8 w-8 rounded-full border border-white/20 bg-white/10" />
         </div>
       </div>
     </header>

@@ -66,3 +66,49 @@ export async function resolveUserOrg(userId: string, email?: string | null, name
 
   return { orgId: org.id, orgRole: "OWNER", created: true };
 }
+
+const SHARED_ORG_SLUG = "default-workspace";
+
+/**
+ * Resolves the workspace that public (signed-out) visitors land in.
+ *
+ * The product is public — there is no sign-in — so one shared tenant serves
+ * every visitor. To make that useful rather than empty, an existing workspace
+ * that already holds signals is adopted as the shared one (most signals first,
+ * oldest on a tie), and only when the database has no signals at all is a fresh
+ * workspace created. This is a real, deterministic choice — no data is invented
+ * or moved.
+ */
+export async function resolveSharedOrg(): Promise<OrgContext> {
+  const existing = await prisma.organization.findUnique({
+    where: { slug: SHARED_ORG_SLUG },
+    select: { id: true },
+  });
+  if (existing) return { orgId: existing.id, orgRole: "OWNER", created: false };
+
+  const adopted = await prisma.organization.findFirst({
+    orderBy: [{ signals: { _count: "desc" } }, { createdAt: "asc" }],
+    select: { id: true, _count: { select: { signals: true } } },
+  });
+
+  if (adopted && adopted._count.signals > 0) {
+    return { orgId: adopted.id, orgRole: "OWNER", created: false };
+  }
+
+  const org = await prisma.organization.create({
+    data: {
+      name: "Default workspace",
+      slug: SHARED_ORG_SLUG,
+      competitorNames: [],
+    },
+    select: { id: true },
+  });
+
+  await prisma.$transaction([
+    ...INTEGRATION_KINDS.map((kind) =>
+      prisma.integration.create({ data: { orgId: org.id, kind, name: kind.toLowerCase() } })
+    ),
+  ]);
+
+  return { orgId: org.id, orgRole: "OWNER", created: true };
+}

@@ -34,14 +34,10 @@ Response: booleans for which service env vars are set (`openai`, `gemini`,
 Response: `{ status: "ok", service, timestamp }` — for uptime monitors and
 container orchestrators (`Dockerfile` HEALTHCHECK points here).
 
-## POST /api/auth/register
-Body: `{ name, email, password (min 8 chars) }`
-Creates a user with a bcrypt-hashed password. Requires `DATABASE_URL` —
-returns `501` if unset. Rate limit: 5 req/min per IP.
-
 ## /api/auth/[...nextauth]
-Standard Auth.js catch-all — handles OAuth callbacks, credential sign-in,
-session, and CSRF endpoints. See `src/lib/auth.ts`.
+Auth.js catch-all (session + CSRF endpoints). The app is public — there is no
+sign-in UI — so this is retained only so any pre-existing session cookie still
+resolves. See `src/lib/auth.ts`.
 
 ---
 

@@ -155,7 +155,7 @@ export default function CsvAnalysisPage() {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {batch.topKeywords.map((k) => (
-                    <Badge key={k.word} tone="aurora">{k.word} · {k.count}</Badge>
+                    <Badge key={k.word} tone="neutral">{k.word} · {k.count}</Badge>
                   ))}
                 </div>
               </GlassCard>

@@ -3,22 +3,22 @@ import { Database, UploadCloud, Plug, Inbox, CircleDot, CheckCircle2, XCircle } 
 import { prisma } from "@/lib/prisma";
 import { requireOrg } from "@/lib/authz";
 import { GlassCard } from "@/components/ui/glass-card";
-import { Badge } from "@/components/ui/badge";
+import { Badge, type BadgeTone } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
 
-const STATUS_TONE: Record<string, "positive" | "neutral" | "negative" | "aurora"> = {
+const STATUS_TONE: Record<string, BadgeTone> = {
   IN_SYNC: "positive",
-  SYNCING: "aurora",
+  SYNCING: "neutral",
   NOT_SYNCED: "neutral",
   DISABLED: "neutral",
   ERROR: "negative",
   COMPLETED: "positive",
-  PARTIALLY_COMPLETED: "warning" as never,
+  PARTIALLY_COMPLETED: "neutral",
   FAILED: "negative",
-  PREVIEWED: "aurora",
-  PROCESSING: "aurora",
+  PREVIEWED: "neutral",
+  PROCESSING: "neutral",
   UPLOADED: "neutral",
   QUEUED: "neutral",
   CANCELLED: "neutral",
