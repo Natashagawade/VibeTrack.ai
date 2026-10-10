@@ -9,11 +9,15 @@ import { Button } from "@/components/ui/button";
 import { Dropzone } from "@/components/ui/dropzone";
 import { AnalysisResultPanel } from "@/components/dashboard/analysis-result-panel";
 import { runOcr, analyzeImageColors } from "@/lib/image-analysis";
+import { analyzeFaceEmotion } from "@/lib/face-emotion";
 import { buildLocalInsight, type LocalImageInsight } from "@/lib/image-insight";
 import { analyzeText, type FullTextAnalysis } from "@/lib/text-analysis";
 import { useConfigStatus } from "@/lib/use-config-status";
 import type { VisionAnalysis } from "@/lib/ai/openai";
-import { Loader2, AlertTriangle, ScanText, Palette, Eye, Sparkles, KeyRound, CheckCircle2, Image as ImageIcon } from "lucide-react";
+import { Loader2, AlertTriangle, ScanText, Palette, Eye, Sparkles, KeyRound, CheckCircle2, Smile, Image as ImageIcon } from "lucide-react";
+import { EXPRESSION_DISPLAY, type ExpressionLabel } from "@/lib/image-insight";
+
+const EMOTION_LABEL: Record<ExpressionLabel, string> = EXPRESSION_DISPLAY;
 
 function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -30,8 +34,10 @@ export default function ImageAnalysisPage() {
   const [preview, setPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [stage, setStage] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [ocrText, setOcrText] = useState("");
+  const [faceCount, setFaceCount] = useState<number | null>(null);
   const [insight, setInsight] = useState<LocalImageInsight | null>(null);
   const [result, setResult] = useState<FullTextAnalysis | null>(null);
 
@@ -45,29 +51,46 @@ export default function ImageAnalysisPage() {
     setResult(null);
     setInsight(null);
     setOcrText("");
+    setFaceCount(null);
     setProgress(0);
     setVision(null);
     setVisionError(null);
     setFile(f);
     setPreview(URL.createObjectURL(f));
 
+    // The expression model is ~320KB, so the judgment surfaces its stage while
+    // it loads, and face recognition failing must never kill the other passes.
     try {
-      const [text, colorAnalysis] = await Promise.all([
-        runOcr(f, setProgress),
-        analyzeImageColors(f),
-      ]);
+      setStage("Reading pixels…");
+      const colorAnalysis = await analyzeImageColors(f);
+
+      setStage("Scanning for faces…");
+      let faceEmotion: LocalImageInsight["faceEmotion"] = null;
+      try {
+        const face = await analyzeFaceEmotion(f);
+        setFaceCount(face.facesDetected);
+        faceEmotion = face.summary;
+      } catch {
+        faceEmotion = null;
+      }
+
+      setStage("Reading any visible text…");
+      const text = await runOcr(f, setProgress);
       const textAnalysis = text.trim().length > 3 ? analyzeText(text) : null;
+
       setOcrText(text);
       setResult(textAnalysis);
       setInsight(
         buildLocalInsight(colorAnalysis, {
           ocrText: text,
           textSentiment: textAnalysis?.sentiment.label ?? null,
+          faceEmotion,
         })
       );
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't analyze that image.");
     } finally {
+      setStage("");
       setLoading(false);
     }
   }
@@ -108,9 +131,11 @@ export default function ImageAnalysisPage() {
       <div className="space-y-6 p-6">
         <GlassCard variant="interactive" className="p-6 animate-fade-in-up">
           <p className="mb-4 text-sm text-[var(--color-text-secondary)]">
-            Upload an image. Real OCR (Tesseract, running as WASM in your browser) extracts any visible text and scores it through the text engine. 
-            The local profile measures brightness, contrast, colour and warmth directly from the pixels — so you always get a correct result, with or without a vision model. 
-            Caption, scene and object detection need AI vision (see the note below).
+            Upload an image. Facial expressions are recognised on-device by a small CNN — so a photo of a crying baby
+            comes back as <strong className="text-[var(--color-text-primary)]">Sadness</strong>, with no API key and no
+            image leaving your browser. Real OCR (Tesseract, also WASM) extracts any visible text and scores it through
+            the text engine, and the profile measures brightness, contrast, colour and warmth straight from the pixels.
+            Caption, scene and object labels still need AI vision (see the note below).
           </p>
           <Dropzone
             accept="image/*"
@@ -120,7 +145,7 @@ export default function ImageAnalysisPage() {
           />
           {loading && (
             <div className="mt-4 flex items-center gap-2 text-sm text-[var(--color-text-secondary)]">
-              <Loader2 className="h-4 w-4 animate-spin" /> Running OCR… {Math.round(progress * 100)}%
+              <Loader2 className="h-4 w-4 animate-spin" /> {stage || "Running OCR…"} {progress > 0 ? `${Math.round(progress * 100)}%` : ""}
             </div>
           )}
           {error && (
@@ -139,6 +164,49 @@ export default function ImageAnalysisPage() {
             </GlassCard>
 
             <div className="space-y-4 lg:col-span-2">
+              {insight?.faceEmotion && !insight.faceEmotion.lowConfidence && (
+                <GlassCard variant="interactive" className="p-6 animate-fade-in-up delay-1 border-[var(--color-accent-violet)]/30 bg-gradient-to-br from-[var(--color-accent-violet)]/5 to-transparent">
+                  <div className="mb-4 flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)]">
+                      <Smile className="h-4 w-4" /> Facial expression
+                    </div>
+                    <Badge tone="violet">
+                      {insight.faceEmotion.faces} face{insight.faceEmotion.faces === 1 ? "" : "s"} · on-device
+                    </Badge>
+                  </div>
+
+                  <div className="mb-4 flex items-baseline gap-3">
+                    <span className="font-[family-name:var(--font-display)] text-3xl font-bold text-gradient-accent">
+                      {EMOTION_LABEL[insight.faceEmotion.dominant.label]}
+                    </span>
+                    <span className="text-sm text-[var(--color-text-secondary)]">
+                      {Math.round(insight.faceEmotion.dominant.intensity * 100)}% confidence
+                    </span>
+                  </div>
+
+                  <div className="space-y-2">
+                    {insight.faceEmotion.emotions.map((e) => (
+                      <div key={e.emotion} className="flex items-center gap-3">
+                        <span className="w-20 shrink-0 text-xs text-[var(--color-text-secondary)]">{e.emotion}</span>
+                        <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/5">
+                          <div
+                            className="h-full rounded-full bg-gradient-to-r from-[var(--color-accent-violet)] to-[var(--color-accent-cyan)]"
+                            style={{ width: `${Math.round(e.intensity * 100)}%` }}
+                          />
+                        </div>
+                        <span className="w-10 shrink-0 text-right text-xs font-mono text-[var(--color-text-muted)]">
+                          {Math.round(e.intensity * 100)}%
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <p className="mt-4 text-xs text-[var(--color-text-muted)]">
+                    Recognised by a small CNN running in your browser (7 expression classes). The image is never uploaded for this step.
+                  </p>
+                </GlassCard>
+              )}
+
               <GlassCard variant="interactive" className="p-6 animate-fade-in-up delay-2">
                 <div className="mb-3 flex items-center gap-2 text-sm text-[var(--color-text-secondary)]">
                   <ScanText className="h-4 w-4" /> OCR extracted text

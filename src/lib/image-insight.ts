@@ -106,15 +106,101 @@ export interface LocalImageInsight {
   hasText: boolean;
   textPreview: string;
   textSentiment: string | null;
+  /** Present when a face-expression model found at least one human face. */
+  faceEmotion: FaceEmotionSummary | null;
   limitations: string[];
+}
+
+/** The seven classes face-api's expression network outputs. */
+export const EXPRESSION_LABELS = [
+  "neutral",
+  "happy",
+  "sad",
+  "angry",
+  "fearful",
+  "disgusted",
+  "surprised",
+] as const;
+
+export type ExpressionLabel = (typeof EXPRESSION_LABELS)[number];
+
+/** Human-facing label + how it reads against the text engine's vocabulary. */
+export const EXPRESSION_DISPLAY: Record<ExpressionLabel, string> = {
+  neutral: "Neutral",
+  happy: "Joy",
+  sad: "Sadness",
+  angry: "Anger",
+  fearful: "Fear",
+  disgusted: "Disgust",
+  surprised: "Surprise",
+};
+
+/** Raw per-expression probabilities for one detected face. */
+export type ExpressionScores = Record<ExpressionLabel, number>;
+
+export interface FaceEmotionSummary {
+  faces: number;
+  /** Dominant expression across all faces, with its confidence. */
+  dominant: { label: ExpressionLabel; intensity: number };
+  /** Every expression above the reporting floor, highest first. */
+  emotions: { emotion: string; intensity: number }[];
+  /** Where each face sits, as fractions of image size, for overlay boxes. */
+  boxes: { x: number; y: number; width: number; height: number }[];
+  /** True when at least one face was detected but none scored above the floor. */
+  lowConfidence: boolean;
+}
+
+const FLOOR = 0.15;
+
+/**
+ * Averages expression probabilities across every detected face and reports the
+ * dominant emotion. Intensity is normalised over the expressions that clear the
+ * floor so the chart always sums to something meaningful.
+ */
+export function summarizeFaceEmotions(
+  faces: ExpressionScores[],
+  boxes: { x: number; y: number; width: number; height: number }[] = []
+): FaceEmotionSummary | null {
+  if (!faces.length) return null;
+
+  const avg = {} as ExpressionScores;
+  for (const label of EXPRESSION_LABELS) {
+    avg[label] = faces.reduce((sum, f) => sum + (f[label] ?? 0), 0) / faces.length;
+  }
+
+  const ranked = EXPRESSION_LABELS
+    .map((label) => ({ label, value: avg[label] }))
+    .sort((a, b) => b.value - a.value);
+
+  const kept = ranked.filter((r) => r.value >= FLOOR);
+  const total = kept.reduce((s, r) => s + r.value, 0);
+
+  return {
+    faces: faces.length,
+    dominant: { label: ranked[0].label, intensity: ranked[0].value },
+    emotions: kept.length
+      ? kept.map((r) => ({
+          emotion: EXPRESSION_DISPLAY[r.label],
+          intensity: Math.round((r.value / total) * 100) / 100,
+        }))
+      : [{ emotion: EXPRESSION_DISPLAY[ranked[0].label], intensity: ranked[0].value }],
+    boxes,
+    lowConfidence: kept.length === 0,
+  };
 }
 
 export function buildLocalInsight(
   stats: ImagePixelStats,
-  opts: { ocrText?: string; textSentiment?: string | null } = {}
+  opts: { ocrText?: string; textSentiment?: string | null; faceEmotion?: FaceEmotionSummary | null } = {}
 ): LocalImageInsight {
   const text = (opts.ocrText ?? "").trim();
   const hasText = text.length > 3;
+  const faceEmotion = opts.faceEmotion ?? null;
+
+  // A measurable facial expression outranks a colour-temperature guess.
+  const mood = faceEmotion && !faceEmotion.lowConfidence
+    ? `${EXPRESSION_DISPLAY[faceEmotion.dominant.label]} — detected on ${faceEmotion.faces} face${faceEmotion.faces === 1 ? "" : "s"} (${Math.round(faceEmotion.dominant.intensity * 100)}% confidence)`
+    : localMood(stats, hasText ? opts.textSentiment ?? null : null);
 
   return {
     source: "local",
@@ -126,15 +212,21 @@ export function buildLocalInsight(
     colorfulness: colorfulnessBucket(stats.colorfulness),
     warmth: warmthBucket(stats.warmth),
     tonality: tonalityLabel(stats),
-    mood: localMood(stats, hasText ? opts.textSentiment ?? null : null),
+    mood,
     dominantColor: stats.dominantColor,
     palette: stats.palette,
     hasText,
     textPreview: hasText ? text.slice(0, 240) : "",
     textSentiment: hasText ? opts.textSentiment ?? null : null,
-    limitations: [
-      "Measured directly from pixels and OCR text — no object, scene or face recognition.",
-      "Caption, scene, objects and face emotion require a vision model (AI vision analysis).",
-    ],
+    faceEmotion,
+    limitations: faceEmotion
+      ? [
+          "Facial expression recognised on-device by a small CNN (7 expression classes) — no image leaves the browser.",
+          "Caption, scene and object labels still require a vision model (AI vision analysis).",
+        ]
+      : [
+          "Measured directly from pixels and OCR text — no object, scene or face recognition.",
+          "Caption, scene, objects and face emotion require a vision model (AI vision analysis).",
+        ],
   };
 }
