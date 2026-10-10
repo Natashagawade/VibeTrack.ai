@@ -49,7 +49,7 @@ function NavLink({ href, label, icon: Icon }: { href: string; label: string; ico
         "focus-ring flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
         active
           ? "glass-panel-strong text-[var(--color-text-primary)] shadow-[0_0_0_1px_rgba(0,229,208,0.3)]"
-          : "text-[var(--color-text-secondary)] hover:glass-panel hover:text-[var(--color-text-primary)]"
+          : "text-[var(--color-text-secondary)] hover-glass hover:text-[var(--color-text-primary)]"
       )}
     >
       <Icon className="h-4 w-4 shrink-0" />

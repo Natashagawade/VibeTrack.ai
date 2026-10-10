@@ -139,7 +139,7 @@ export function MemoryRecallPanel() {
           ) : (
             <div className="space-y-3">
               {data.results.map((m) => (
-                <GlassCard key={m.id} variant="subtle" className="p-4 hover:glass-panel transition-all duration-200">
+                <GlassCard key={m.id} variant="subtle" className="p-4 hover-glass transition-all duration-200">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-[family-name:var(--font-display)] text-sm font-semibold text-[var(--color-text-primary)]">
                       {m.title}

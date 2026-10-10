@@ -291,8 +291,10 @@ export default async function BrandMonitorPage() {
                                     {weekDeltaPct}%
                                   </>
                                 ) : (
-                                  <Minus className="h-3 w-3 inline mr-1" />
-                                  —
+                                  <>
+                                    <Minus className="h-3 w-3 inline mr-1" />
+                                    {"—"}
+                                  </>
                                 )}
                               </p>
                             </div>
@@ -310,8 +312,10 @@ export default async function BrandMonitorPage() {
                                     {monthDeltaPct}%
                                   </>
                                 ) : (
-                                  <Minus className="h-3 w-3 inline mr-1" />
-                                  —
+                                  <>
+                                    <Minus className="h-3 w-3 inline mr-1" />
+                                    {"—"}
+                                  </>
                                 )}
                               </p>
                             </div>
@@ -321,7 +325,7 @@ export default async function BrandMonitorPage() {
                           {comp.recentSignals.length > 0 && (
                             <div className="w-full space-y-2">
                               {comp.recentSignals.slice(0, 3).map((signal: any) => (
-                                <div key={signal.id} className="glass-panel-subtle rounded-lg p-3 hover:glass-panel transition-all duration-200">
+                                <div key={signal.id} className="glass-panel-subtle rounded-lg p-3 hover-glass transition-all duration-200">
                                   <div className="flex items-start gap-2">
                                     <div className="flex-1 min-w-0">
                                       <p className="text-xs text-[var(--color-text-primary)] line-clamp-2">"{signal.text.slice(0, 120)}"</p>

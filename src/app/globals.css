@@ -104,8 +104,23 @@ body {
   -webkit-backdrop-filter: blur(16px);
 }
 
+/* Hover lift for rows/cards that are not already glass */
+.hover-glass {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-glass:hover {
+  background: var(--color-glass-light);
+  border-color: var(--color-glass-border-strong);
+  box-shadow: var(--shadow-glass), var(--shadow-inner-glass);
+}
+
 .glass-card-interactive {
-  @apply glass-panel;
+  background: var(--color-glass-light);
+  border: 1px solid var(--color-glass-border);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: var(--shadow-glass), var(--shadow-inner-glass);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -185,11 +200,8 @@ body {
 }
 
 .focus-ring:focus-visible {
-  outline: none;
-  ring: 2px;
-  ring-color: var(--color-accent-cyan);
-  ring-offset: 2px;
-  ring-offset-color: var(--color-bg-base);
+  outline: 2px solid var(--color-accent-cyan);
+  outline-offset: 2px;
 }
 
 /* Scrollbar styling */

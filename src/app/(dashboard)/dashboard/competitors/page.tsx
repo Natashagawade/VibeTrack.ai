@@ -1,9 +1,12 @@
-import { Building2 } from "lucide-react";
+import { Building2, TrendingUp, TrendingDown, Minus, AlertTriangle } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireOrg } from "@/lib/authz";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, TrendingDown, Minus, AlertTriangle } from "lucide-react";
+
+function sentimentLabel(sentiment: unknown): string {
+  return (sentiment as { label?: string } | null)?.label ?? "Neutral";
+}
 
 async function getCompetitorRows(orgId: string, names: string[]) {
   const now = Date.now();
@@ -108,22 +111,25 @@ export default async function CompetitorsPage() {
                 </div>
                 {row.signals.length > 0 && (
                   <div className="mt-4 space-y-1.5">
-                    {row.signals.map((s) => (
-                      <div key={s.id} className="glass-panel-subtle rounded-lg p-3 hover:glass-panel transition-all duration-200">
+                {row.signals.map((s) => {
+                  const label = sentimentLabel(s.sentiment);
+                  return (
+                      <div key={s.id} className="glass-panel-subtle rounded-lg p-3 hover-glass transition-all duration-200">
                         <p className="text-xs text-[var(--color-text-primary)]">"{s.text.slice(0, 200)}"</p>
                         <div className="flex items-center gap-2 mt-1">
-                          <Badge 
-                            tone={s.sentiment?.label === "Positive" ? "positive" : s.sentiment?.label === "Negative" ? "negative" : "neutral"} 
+                          <Badge
+                            tone={label === "Positive" ? "positive" : label === "Negative" ? "negative" : "neutral"}
                             className="text-[10px]"
                           >
-                            {s.sentiment?.label ?? "Neutral"}
+                            {label}
                           </Badge>
                           <span className="text-[10px] text-[var(--color-text-muted)]">
                             {new Date(s.receivedAt).toLocaleDateString()}
                           </span>
                         </div>
                       </div>
-                    ))}
+                  );
+                })}
                   </div>
                 )}
               </GlassCard>
